@@ -47,10 +47,10 @@ private:
 	mutex termiantionMtx;
 	bool terminate = false;
 	mutex tickMtx;
-	long long firstTick;
-	long long tick;
+	long long firstTick = 0L;
+	long long tick = 0L;
 	long tickCount = 0L;
-	int averageTickTime;
+	int averageTickTime = 0;
 	void terminateThreads() {
 		termiantionMtx.lock();
 		terminate = true;
@@ -67,7 +67,7 @@ private:
 	void setTick(long long newTick) {
 		tickMtx.lock();
 		tick = newTick;
-		averageTickTime = (tick - firstTick) / ++tickCount;
+		averageTickTime = (int)(tick - firstTick) / ++tickCount;
 		tickMtx.unlock();
 	}
 

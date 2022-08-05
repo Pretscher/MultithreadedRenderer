@@ -31,7 +31,7 @@ public:
     static void freeAllMemory() {
         delete window;
 		
-        for (int i = 0; i < permanentObjects.size(); i++) {
+        for (unsigned int i = 0; i < permanentObjects.size(); i++) {
 			delete permanentObjects[i];
         }
 		permanentObjects.clear();
@@ -39,7 +39,7 @@ public:
 	
     static void removePermanentObject(ts::Drawable* drawable) {
         isDrawing.lock();
-        for (int i = 0; i < permanentObjects.size(); i++) {
+        for (unsigned int i = 0; i < permanentObjects.size(); i++) {
             if (permanentObjects[i] == drawable) {
 				permanentObjects.erase(permanentObjects.begin() + i);
                 isDrawing.unlock();

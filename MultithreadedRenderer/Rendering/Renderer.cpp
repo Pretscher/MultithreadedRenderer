@@ -23,12 +23,12 @@ void Renderer::joinDrawingThread() {
         isDrawing.lock();
 
 		//lock all drawables before drawing, so that they are at the transformation state of the same frame.
-        for (int i = 0; i < permanentObjects.size(); i++) {
+        for (unsigned int i = 0; i < permanentObjects.size(); i++) {
             permanentObjects[i]->lock();
         }
 		
         //draw permanent objects
-        for (int i = 0; i < permanentObjects.size(); i++) {
+        for (unsigned int i = 0; i < permanentObjects.size(); i++) {
             permanentObjects[i]->draw();
             permanentObjects[i]->unlock();
         }

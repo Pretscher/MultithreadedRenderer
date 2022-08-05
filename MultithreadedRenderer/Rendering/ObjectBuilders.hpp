@@ -14,7 +14,7 @@ public:
 
 class ShapeBuilder : DrawableBuilder {
 protected:
-    sf::Shape* shape;
+    sf::Shape* shape = nullptr;
 public:
     /**
      * @brief Draw this shape permanently (by adding it to the renderers list of permanent objects) and change it's properties through the pointer.
@@ -50,7 +50,7 @@ public:
      * @param color
      * @return ShapeBuilder&
      */
-    virtual ShapeBuilder& addOutline(sf::Color color, int thickness) {
+    virtual ShapeBuilder& addOutline(sf::Color color, float thickness) {
         shape->setOutlineColor(color);
         shape->setOutlineThickness(thickness);
         return *this;
@@ -66,7 +66,7 @@ public:
         shape->setTexture(&texture);
         if (texture.isRepeated() == true) {
             auto bounds = shape->getGlobalBounds();
-            sf::IntRect rect = sf::IntRect(bounds.left, bounds.top, bounds.width, bounds.height);
+            sf::IntRect rect = sf::IntRect((int)bounds.left, (int)bounds.top, (int)bounds.width, (int)bounds.height);
             shape->setTextureRect(rect);
         }//else stretch
         return *this;
@@ -85,7 +85,7 @@ public:
         shape->setTexture(&texture);
         if (texture.isRepeated() == true) {
             auto bounds = shape->getGlobalBounds();
-            sf::IntRect rect = sf::IntRect(bounds.left, bounds.top, bounds.width, bounds.height);
+            sf::IntRect rect = sf::IntRect((int)bounds.left, (int)bounds.top, (int)bounds.width, (int)bounds.height);
             shape->setTextureRect(rect);
         }//else stretch
         return *this;
@@ -114,7 +114,7 @@ private:
 
 class CircleBuilder : public ShapeBuilder {
 public:
-    CircleBuilder(int x, int y, int radius) {
+    CircleBuilder(float x, float y, float radius) {
         shape = new sf::CircleShape(radius);
         shape->setPosition(x, y);
     }
@@ -122,8 +122,8 @@ public:
 
 class RectBuilder : public ShapeBuilder {
 public:
-    RectBuilder(int x, int y, int width, int height) {
-        shape = new sf::RectangleShape(sf::Vector2f(width, height));
+    RectBuilder(float x, float y, float width, float height) {
+        shape = new sf::RectangleShape(sf::Vector2f((float)width, (float)height));
         shape->setPosition(x, y);
     }
 };
@@ -140,7 +140,7 @@ public:
      * @param x
      * @param y
      */
-    TextBuilder(int x, int y) {
+    TextBuilder(float x, float y) {
         text = new sf::Text();
         text->setPosition(x, y);
 
@@ -203,13 +203,13 @@ public:
         return *this;
     }
 
-    TextBuilder& addOutline(sf::Color color, int thickness) {
+    TextBuilder& addOutline(sf::Color color, float thickness) {
         text->setOutlineColor(color);
         text->setOutlineThickness(thickness);
         return *this;
     }
 
-    TextBuilder& centerToRect(int rectX, int rectY, int rectWidth, int rectHeight);
+    TextBuilder& centerToRect(float rectX, float rectY, float rectWidth, float rectHeight);
 
 
     static std::optional<sf::Font*> loadFont(std::string fontName);

@@ -2,17 +2,17 @@
 
 //Text Builder---------------------------------------------------------------------------------------------------------------------------------------------------
 
-TextBuilder& TextBuilder::centerToRect(int rectX, int rectY, int rectWidth, int rectHeight) {
+TextBuilder& TextBuilder::centerToRect(float rectX, float rectY, float rectWidth, float rectHeight) {
     std::string temp = text->getString().toAnsiString();
     bool bold = (text->getStyle() == sf::Text::Bold);
 
-    int maxHeight = 0;
-    for (int x = 0; x < text->getString().getSize(); x++)
+    float maxHeight = 0;
+    for (unsigned int x = 0; x < text->getString().getSize(); x++)
     {
         sf::Uint32 Character = temp.at(x);
         const sf::Glyph& CurrentGlyph = text->getFont()->getGlyph(Character, text->getCharacterSize(), bold);
 
-        int Height = CurrentGlyph.bounds.height;
+        float Height = CurrentGlyph.bounds.height;
 
         if (maxHeight < Height) {
             maxHeight = Height;
@@ -21,8 +21,8 @@ TextBuilder& TextBuilder::centerToRect(int rectX, int rectY, int rectWidth, int 
 
     sf::FloatRect rect = text->getGlobalBounds();
 
-    rect.left = ((float)rectWidth / 2) - (rect.width / 2);
-    rect.top = ((float)rectHeight / 2) - ((float)maxHeight / 2) - (rect.height - maxHeight) + (((float)rect.height - (text->getCharacterSize() * 1.5))) / 2;
+    rect.left = (rectWidth / 2.0f) - (rect.width / 2.0f);
+    rect.top = (rectHeight / 2.0f) - (maxHeight / 2.0f) - (rect.height - maxHeight) + ((rect.height - ((float)text->getCharacterSize() * 1.5f))) / 2.0f;
 
     text->setPosition(rect.left + rectX, rect.top + rectY);
     return *this;

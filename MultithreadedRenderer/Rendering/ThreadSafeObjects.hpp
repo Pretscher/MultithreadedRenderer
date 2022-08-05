@@ -43,7 +43,7 @@ namespace ts {
 			delete shape;
 		}
 
-		void transform(int x, int y) {
+		void transform(float x, float y) {
 			mtx.lock();
 			shape->setPosition(x, y);
 			mtx.unlock();
@@ -75,7 +75,7 @@ namespace ts {
 			delete text;
 		}
 
-		void transform(int x, int y) {
+		void transform(float x, float y) {
 			mtx.lock();
 			text->setPosition(x, y);
 			mtx.unlock();

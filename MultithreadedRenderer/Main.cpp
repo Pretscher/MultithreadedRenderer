@@ -7,7 +7,7 @@
 using namespace std;
 
 ts::Shape *rect, *rect2;
-ts::Shape* circle;
+ts::Shape *circle;
 ts::Text *text;
 
 void init() {
@@ -17,7 +17,7 @@ void init() {
     text = TextBuilder(500, 500).setString("Hello world!").setColor(sf::Color::White).build();
 }
 
-int x;
+float x;
 bool circleDeleted = false;
 bool goRight;
 void eventloop() {
@@ -48,7 +48,7 @@ int main() {
     Renderer::initWindow();
     sf::Event events;
     while(Renderer::window->isOpen()) {
-        //this_thread::sleep_for(1ms);
+        this_thread::sleep_for(1ms);
         while (Renderer::window->pollEvent(events)) {
             if (events.type == sf::Event::Closed) {
                 Renderer::window->close();
