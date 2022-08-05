@@ -6,17 +6,22 @@
 #include <optional>
 #include <map>
 
-class ShapeBuilder {
+class DrawableBuilder {
+public:
+    virtual ts::Drawable* build() = 0;
+    virtual ts::Drawable* getWithoutDrawing() = 0;
+};
+
+class ShapeBuilder : DrawableBuilder {
 protected:
     sf::Shape* shape;
 public:
-    ShapeBuilder() {}
     /**
      * @brief Draw this shape permanently (by adding it to the renderers list of permanent objects) and change it's properties through the pointer.
      *
      * @return sf::Drawable*
      */
-    virtual ts::Shape* build() {
+    virtual ts::Shape* build() override {
         ts::Shape* tsShape = new  ts::Shape(shape);
         Renderer::addPermanentObject(tsShape);
         return tsShape;
@@ -26,7 +31,7 @@ public:
      *
      * @return sf::Drawable*
      */
-    virtual  ts::Shape* getWithoutDrawing() {
+    virtual  ts::Shape* getWithoutDrawing() override {
         return new  ts::Shape(shape);
     }
     /**
@@ -123,7 +128,7 @@ public:
     }
 };
 
-class TextBuilder {
+class TextBuilder : public DrawableBuilder {
 protected:
     sf::Text* text;
     bool fontLoaded = false;
@@ -147,7 +152,7 @@ public:
      *
      * @return sf::Drawable*
      */
-    virtual ts::Text* build() {
+    virtual ts::Text* build() override {
         if (fontLoaded == false) {
             std::cout << "can't build or get text without a font";
             return nullptr;
@@ -161,7 +166,7 @@ public:
      *
      * @return sf::Drawable*
      */
-    virtual ts::Text* getWithoutDrawing() {
+    virtual ts::Text* getWithoutDrawing() override {
         if (fontLoaded == false) {
             std::cout << "can't get text without a font";
             return nullptr;
