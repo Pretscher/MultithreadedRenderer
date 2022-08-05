@@ -3,11 +3,11 @@
 #include "SFML/Graphics.hpp"
 
 namespace ts {
-
 	class Drawable {
 	protected:
 		std::mutex mtx;
 	public:
+		~Drawable();//implemented in the cpp file because it has to inform the renderer of the deletion, and the renderer includes this header.
 		void lock() {
 			mtx.lock();
 		}
@@ -41,7 +41,6 @@ namespace ts {
 		~Shape() {
 			delete shape;
 		}
-
 
 		void transform(int x, int y) {
 			mtx.lock();

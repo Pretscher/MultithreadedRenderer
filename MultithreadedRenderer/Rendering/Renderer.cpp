@@ -62,13 +62,20 @@ long Renderer::framesToDraw;
         return temp;
     }
 
-
+   
+    void lockVector(std::vector<ts::Drawable*>& vector ) {
+        for (int i = 0; i < vector.size(); i++) {
+            vector[i]->lock();
+        }
+    }
 
     void Renderer::drawFrame() {
         window->clear();
-        //at first, lock all shapes so that they cannot be transformed during the drawing process. Unlock them step by step for performance.
-        for (int i = 0; i < currentFrame.size(); i++) currentFrame[i]->lock();
-        for (int i = 0; i < permanentObjects.size(); i++) permanentObjects[i]->lock();
+        isDrawing.lock();
+		//to stop a drawable from being drawn by the renderer, it is deleted externally. Thus we have to check for nullptrs and remove them from the vectors.
+        lockVector(currentFrame);
+        lockVector(permanentObjects);
+		
         //draw temporary objects
         for (int i = 0; i < currentFrame.size(); i++) {
             currentFrame[i]->draw();
@@ -79,6 +86,7 @@ long Renderer::framesToDraw;
             permanentObjects[i]->draw();
             permanentObjects[i]->unlock();
         }
+        isDrawing.unlock();
         window->display();
     }
 

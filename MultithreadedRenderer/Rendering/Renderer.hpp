@@ -42,8 +42,21 @@ public:
         }
 		nextFrame.clear();
     }
+	
+    static void removePermanentObject(ts::Drawable* drawable) {
+        isDrawing.lock();
+        for (int i = 0; i < permanentObjects.size(); i++) {
+            if (permanentObjects[i] == drawable) {
+				permanentObjects.erase(permanentObjects.begin() + i);
+                isDrawing.unlock();
+				return;
+			}
+        }
+        isDrawing.unlock();
+    }
 
 private:
+
     //SFML always uses the dimensions of window creation, which means we only have to save these once in the constructor.
     static int xPixels;
     static int yPixels;

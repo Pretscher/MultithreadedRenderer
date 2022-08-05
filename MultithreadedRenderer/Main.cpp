@@ -18,6 +18,7 @@ void init() {
 }
 
 int x;
+bool circleDeleted = false;
 bool goRight;
 void eventloop() {
     if(goRight) {
@@ -25,13 +26,19 @@ void eventloop() {
     } else {
         x--;
     }
-    if(x >= 300) {
+    if(x >= 1000) {
         goRight = false;
+        if (circleDeleted == false) {
+            delete circle;
+            circle = nullptr;
+			circleDeleted = true;
+        }
     } else if(x <= 10) {
         goRight = true;
     }
     rect->transform(x, 10);
     rect2->transform(x, 130);
+
 }
 
 int main() {
