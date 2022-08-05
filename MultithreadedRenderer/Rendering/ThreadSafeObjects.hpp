@@ -13,10 +13,11 @@ namespace ts {
 		}
 
 		void unlock() {
-			mtx.unlock();
+			if (mtx.try_lock() == false) {
+				mtx.unlock();
+			}
 		}
 
-		void drawOnce();
 		/** ONLY CALL IN RENDERER! If you call it from anywhere else, it is not thread-synced
 		*/
 		virtual void draw() = 0;

@@ -8,9 +8,6 @@
 #include "ThreadSafeObjects.hpp"
 class Renderer {
 private:
-    //save all drawables in this vector and draw them all at once, when update() is called.
-    static std::vector<ts::Drawable*> nextFrame;
-    static std::vector<ts::Drawable*> currentFrame;
     static std::vector<ts::Drawable*> permanentObjects;
 
     static std::thread* drawingThread;
@@ -29,6 +26,8 @@ public:
         drawingThread = new std::thread(&Renderer::threadInit);
     }
 
+    static void drawFrame();
+
     static void freeAllMemory() {
         delete window;
 		
@@ -36,11 +35,6 @@ public:
 			delete permanentObjects[i];
         }
 		permanentObjects.clear();
-		
-        for (int i = 0; i < nextFrame.size(); i++) {
-            delete nextFrame[i];
-        }
-		nextFrame.clear();
     }
 	
     static void removePermanentObject(ts::Drawable* drawable) {
@@ -70,43 +64,13 @@ public:
         return yPixels;
     }
 
-    static void drawOnce(ts::Drawable* toDraw) {
-        isDrawing.lock();
-        nextFrame.push_back(toDraw);
-        isDrawing.unlock();
-    }
-
     static void addPermanentObject(ts::Drawable* object) {
         permanentObjects.push_back(object);
     }
-    /**
-     * @brief Threadsafe way to tell this thread to draw all the objects pushed to it in the last frame.
-     * Includes frame skipping.
-     */
-    static void drawNextFrame();
     static void joinDrawingThread();
 
 protected:
-    /**
-     * @brief If next frame does not have the same counter as the current frame, then draw the next frame. Else wait for the next frame.
-     *  If the frame counter increases too fast (rendering falls behind) this allows skipping frames 
-     */
-    static std::mutex framesToDrawMutex;
-    static long framesToDraw;
-    static int getFramesToDraw();
-    static void incrementFrameToDraw();
-
-    static std::mutex drawnFramesMutex;
-    static long drawnFrames;
-    static void incrementDrawnFrames();
-    static int getDrawnFrames();
-
-    static void drawFrame();
-
     static void threadInit();
 
     static void loop();
-
-private:
-    static void changeFrames();
 };

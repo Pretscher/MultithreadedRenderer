@@ -8,10 +8,6 @@ ts::Drawable::~Drawable() {
 	mtx.unlock();
 }
 
-void ts::Drawable::drawOnce() {
-	Renderer::drawOnce(this);
-}
-
 void ts::Shape::draw() {
 	Renderer::window->draw(*shape);
 }

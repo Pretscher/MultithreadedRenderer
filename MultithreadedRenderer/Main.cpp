@@ -62,7 +62,6 @@ int main() {
         }
 
         eventloop();
-        Renderer::drawNextFrame();
         Mouse::update();
     }
     Renderer::joinDrawingThread();
