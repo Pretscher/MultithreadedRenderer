@@ -1,15 +1,15 @@
 #include "ThreadSafeObjects.hpp"
 #include "Renderer.hpp"
 
-void ThreadSafeDrawable::drawOnce() {
+void ts::Drawable::drawOnce() {
 	Renderer::drawOnce(this);
 }
 
-void ThreadSafeShape::draw() {
+void ts::Shape::draw() {
 	Renderer::window->draw(*shape);
 }
 
-void ThreadSafeText::draw() {
+void ts::Text::draw() {
 	Renderer::window->draw(*text);
 }
 

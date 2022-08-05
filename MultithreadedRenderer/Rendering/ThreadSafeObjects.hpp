@@ -2,84 +2,88 @@
 #include <mutex>
 #include "SFML/Graphics.hpp"
 
-class ThreadSafeDrawable {
-protected:
-	std::mutex mtx;
-public: 
-	void lock() {
-		mtx.lock();
-	}
+namespace ts {
 
-	void unlock() {
-		mtx.unlock();
-	}
+	class Drawable {
+	protected:
+		std::mutex mtx;
+	public:
+		void lock() {
+			mtx.lock();
+		}
 
-	void drawOnce();
-	/** ONLY CALL IN RENDERER! If you call it from anywhere else, it is not thread-synced
-	*/
-	virtual void draw() = 0;
-};
+		void unlock() {
+			mtx.unlock();
+		}
 
-class ThreadSafeShape : public ThreadSafeDrawable {
-protected:
-	sf::Shape* shape;
-public:
-	//It does not make sense to construct a ThreadSafeShape without a shape.
-	ThreadSafeShape() = delete;
-	/*  You have to handle these shapes in pointers, because mutices can't be moved properly => with pointers there is no need for a copy constructor,
-	avoids mistakes*/
-	ThreadSafeShape(const ThreadSafeShape& copy) = delete;
-	//You have to handle these shapes in pointers, because mutices can't be moved properly => no move constructor
-	ThreadSafeShape(ThreadSafeShape&& toMove) = delete;
+		void drawOnce();
+		/** ONLY CALL IN RENDERER! If you call it from anywhere else, it is not thread-synced
+		*/
+		virtual void draw() = 0;
+	};
 
-	ThreadSafeShape(sf::Shape* shape) {
-		this->shape = shape;
-	}
+	class Shape : public Drawable {
+	protected:
+		sf::Shape* shape;
+	public:
+		//It does not make sense to construct a ThreadSafeShape without a shape.
+		Shape() = delete;
+		/*  You have to handle these shapes in pointers, because mutices can't be moved properly => with pointers there is no need for a copy constructor,
+		avoids mistakes*/
+		Shape(const Shape& copy) = delete;
+		//You have to handle these shapes in pointers, because mutices can't be moved properly => no move constructor
+		Shape(Shape&& toMove) = delete;
 
-	~ThreadSafeShape() {
-		delete shape;
-	}
+		Shape(sf::Shape* shape) {
+			this->shape = shape;
+		}
+
+		~Shape() {
+			delete shape;
+		}
 
 
-	void transform(int x, int y) {
-		mtx.lock();
-		shape->setPosition(x, y);
-		mtx.unlock();
-	}
-	
-	/** ONLY CALL IN RENDERER! If you call it from anywhere else, it is not thread-synced
-	*/
-	void draw() override;
+		void transform(int x, int y) {
+			mtx.lock();
+			shape->setPosition(x, y);
+			mtx.unlock();
+		}
 
-};
+		/** ONLY CALL IN RENDERER! If you call it from anywhere else, it is not thread-synced
+		*/
+		void draw() override;
 
-class ThreadSafeText : public ThreadSafeDrawable {
-protected:
-	sf::Text* text;
-public:
-	//It does not make sense to construct a ThreadSafeShape without a shape.
-	ThreadSafeText() = delete;
-	/*  You have to handle these shapes in pointers, because mutices can't be moved properly => with pointers there is no need for a copy constructor,
-	avoids mistakes*/
-	ThreadSafeText(const ThreadSafeText& copy) = delete;
-	//You have to handle these shapes in pointers, because mutices can't be moved properly => no move constructor
-	ThreadSafeText(ThreadSafeText&& toMove) = delete;
+	};
 
-	ThreadSafeText(sf::Text* text) {
-		this->text = text;
-	}
+	class Text : public Drawable {
+	protected:
+		sf::Text* text;
+	public:
+		//It does not make sense to construct a ThreadSafeShape without a shape.
+		Text() = delete;
+		/*  You have to handle these shapes in pointers, because mutices can't be moved properly => with pointers there is no need for a copy constructor,
+		avoids mistakes*/
+		Text(const Text& copy) = delete;
+		//You have to handle these shapes in pointers, because mutices can't be moved properly => no move constructor
+		Text(Text&& toMove) = delete;
 
-	~ThreadSafeText() {
-		delete text;
-	}
+		Text(sf::Text* text) {
+			this->text = text;
+		}
 
-	void transform(int x, int y) {
-		mtx.lock();
-		text->setPosition(x, y);
-		mtx.unlock();
-	}
-	/** ONLY CALL IN RENDERER! If you call it from anywhere else, it is not thread-synced
-	*/
-	void draw() override;
+		~Text() {
+			delete text;
+		}
 
-};
+		void transform(int x, int y) {
+			mtx.lock();
+			text->setPosition(x, y);
+			mtx.unlock();
+		}
+		/** ONLY CALL IN RENDERER! If you call it from anywhere else, it is not thread-synced
+		*/
+		void draw() override;
+
+	};
+
+}

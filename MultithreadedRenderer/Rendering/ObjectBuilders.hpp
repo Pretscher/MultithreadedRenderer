@@ -16,8 +16,8 @@ public:
      *
      * @return sf::Drawable*
      */
-    virtual ThreadSafeShape* build() {
-        ThreadSafeShape* tsShape = new ThreadSafeShape(shape);
+    virtual ts::Shape* build() {
+        ts::Shape* tsShape = new  ts::Shape(shape);
         Renderer::addPermanentObject(tsShape);
         return tsShape;
     }
@@ -26,8 +26,8 @@ public:
      *
      * @return sf::Drawable*
      */
-    virtual ThreadSafeShape* getWithoutDrawing() {
-        return new ThreadSafeShape(shape);
+    virtual  ts::Shape* getWithoutDrawing() {
+        return new  ts::Shape(shape);
     }
     /**
      * @brief Set the color of this shape.
@@ -147,12 +147,12 @@ public:
      *
      * @return sf::Drawable*
      */
-    virtual ThreadSafeText* build() {
+    virtual ts::Text* build() {
         if (fontLoaded == false) {
             std::cout << "can't build or get text without a font";
             return nullptr;
         }
-        ThreadSafeText* tsText = new ThreadSafeText(this->text);
+        ts::Text* tsText = new ts::Text(this->text);
         Renderer::addPermanentObject(tsText);
         return tsText;
     }
@@ -161,12 +161,12 @@ public:
      *
      * @return sf::Drawable*
      */
-    virtual ThreadSafeText* getWithoutDrawing() {
+    virtual ts::Text* getWithoutDrawing() {
         if (fontLoaded == false) {
             std::cout << "can't get text without a font";
             return nullptr;
         }
-        return new ThreadSafeText(this->text);
+        return new ts::Text(this->text);
     }
 
     TextBuilder& setString(std::string string) {
@@ -205,6 +205,7 @@ public:
     }
 
     TextBuilder& centerToRect(int rectX, int rectY, int rectWidth, int rectHeight);
+
 
     static std::optional<sf::Font*> loadFont(std::string fontName);
 

@@ -9,9 +9,9 @@
 class Renderer {
 private:
     //save all drawables in this vector and draw them all at once, when update() is called.
-    static std::vector<ThreadSafeDrawable*> nextFrame;
-    static std::vector<ThreadSafeDrawable*> currentFrame;
-    static std::vector<ThreadSafeDrawable*> permanentObjects;
+    static std::vector<ts::Drawable*> nextFrame;
+    static std::vector<ts::Drawable*> currentFrame;
+    static std::vector<ts::Drawable*> permanentObjects;
 
     static std::thread* drawingThread;
     static std::mutex isDrawing;
@@ -57,13 +57,13 @@ public:
         return yPixels;
     }
 
-    static void drawOnce(ThreadSafeDrawable* toDraw) {
+    static void drawOnce(ts::Drawable* toDraw) {
         isDrawing.lock();
         nextFrame.push_back(toDraw);
         isDrawing.unlock();
     }
 
-    static void addPermanentObject(ThreadSafeDrawable* object) {
+    static void addPermanentObject(ts::Drawable* object) {
         permanentObjects.push_back(object);
     }
     /**

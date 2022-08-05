@@ -1,6 +1,5 @@
 #include "ObjectBuilders.hpp"
 
-
 //Text Builder---------------------------------------------------------------------------------------------------------------------------------------------------
 
 TextBuilder& TextBuilder::centerToRect(int rectX, int rectY, int rectWidth, int rectHeight) {

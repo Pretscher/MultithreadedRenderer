@@ -6,9 +6,9 @@
 #include "ClockThread.hpp"
 using namespace std;
 
-ThreadSafeShape *rect, *rect2;
-ThreadSafeShape* circle;
-ThreadSafeText *text;
+ts::Shape *rect, *rect2;
+ts::Shape* circle;
+ts::Text *text;
 
 void init() {
     rect = RectBuilder(0, 0, 100, 100).setColor(sf::Color::Red).addOutline(sf::Color::Blue, 10).build();

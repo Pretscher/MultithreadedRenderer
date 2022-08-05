@@ -3,9 +3,9 @@
 
 sf::RenderWindow* Renderer::window;
 
-std::vector<ThreadSafeDrawable*> Renderer::nextFrame;
-std::vector<ThreadSafeDrawable*> Renderer::currentFrame;
-std::vector<ThreadSafeDrawable*> Renderer::permanentObjects;
+std::vector<ts::Drawable*> Renderer::nextFrame;
+std::vector<ts::Drawable*> Renderer::currentFrame;
+std::vector<ts::Drawable*> Renderer::permanentObjects;
 std::thread* Renderer::drawingThread;
 std::mutex Renderer::isDrawing;
 
