@@ -1,7 +1,5 @@
 #include "Rendering/Renderer.hpp"
-#include "Rendering/Builders/ShapeBuilder.hpp"
-#include "Rendering/Builders/RectBuilder.hpp"
-#include "Rendering/Builders/CircleBuilder.hpp"
+#include "Rendering/ObjectBuilders.hpp"
 #include "Rendering/Mouse.hpp"
 #include <iostream>
 
@@ -10,13 +8,13 @@ using namespace std;
 
 ThreadSafeShape *rect, *rect2;
 ThreadSafeShape* circle;
-//sf::Text *text;
+ThreadSafeText *text;
 
 void init() {
     rect = RectBuilder(0, 0, 100, 100).setColor(sf::Color::Red).addOutline(sf::Color::Blue, 10).build();
     rect2 = RectBuilder(0, 0, 100, 100).setColor(sf::Color::Blue).addOutline(sf::Color::Red, 10).build();
     circle = CircleBuilder(500, 200, 50).setColor(sf::Color::Green).addOutline(sf::Color::Yellow, 10).build();
-   // text = TextBuilder(renderer, 500, 500).setString("Hello world!").setColor(sf::Color::White).build();
+    text = TextBuilder(500, 500).setString("Hello world!").setColor(sf::Color::White).build();
 }
 
 int x;
@@ -61,5 +59,6 @@ int main() {
         Mouse::update();
     }
     Renderer::joinDrawingThread();
+    Renderer::freeAllMemory();
     return 0;
 }

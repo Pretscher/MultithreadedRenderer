@@ -20,16 +20,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Rendering\Drawables.cpp" />
+    <ClCompile Include="Rendering\ObjectBuilders.cpp" />
+    <ClCompile Include="Rendering\ObjectBuilders.hpp" />
+    <ClCompile Include="Rendering\ThreadSafeObjects.cpp" />
     <ClCompile Include="Rendering\Mouse.cpp" />
     <ClCompile Include="Rendering\Renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Rendering\Builders\CircleBuilder.hpp" />
-    <ClInclude Include="Rendering\Builders\RectBuilder.hpp" />
-    <ClInclude Include="Rendering\Builders\ShapeBuilder.hpp" />
-    <ClInclude Include="Rendering\Builders\TextBuilder.hpp" />
-    <ClInclude Include="Rendering\Drawables.hpp" />
+    <ClInclude Include="Rendering\ThreadSafeObjects.hpp" />
     <ClInclude Include="Rendering\Mouse.hpp" />
     <ClInclude Include="Rendering\Renderer.hpp" />
     <ClInclude Include="ClockThread.hpp" />

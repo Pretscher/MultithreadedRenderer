@@ -3,9 +3,9 @@
 
 sf::RenderWindow* Renderer::window;
 
-std::vector<ThreadSafeShape*> Renderer::nextFrame;
-std::vector<ThreadSafeShape*> Renderer::currentFrame;
-std::vector<ThreadSafeShape*> Renderer::permanentObjects;
+std::vector<ThreadSafeDrawable*> Renderer::nextFrame;
+std::vector<ThreadSafeDrawable*> Renderer::currentFrame;
+std::vector<ThreadSafeDrawable*> Renderer::permanentObjects;
 std::thread* Renderer::drawingThread;
 std::mutex Renderer::isDrawing;
 
@@ -25,6 +25,7 @@ void Renderer::drawNextFrame() {
 
 void Renderer::joinDrawingThread() {
     drawingThread->join();
+    delete drawingThread;
 }
 
 //Protected Methods--------------------------------------------------------------------------------------------------------------------------------------

@@ -5,13 +5,13 @@
 #include <mutex>
 #include "SFML/Graphics.hpp"
 
-#include "Drawables.hpp"
+#include "ThreadSafeObjects.hpp"
 class Renderer {
 private:
     //save all drawables in this vector and draw them all at once, when update() is called.
-    static std::vector<ThreadSafeShape*> nextFrame;
-    static std::vector<ThreadSafeShape*> currentFrame;
-    static std::vector<ThreadSafeShape*> permanentObjects;
+    static std::vector<ThreadSafeDrawable*> nextFrame;
+    static std::vector<ThreadSafeDrawable*> currentFrame;
+    static std::vector<ThreadSafeDrawable*> permanentObjects;
 
     static std::thread* drawingThread;
     static std::mutex isDrawing;
@@ -29,6 +29,20 @@ public:
         drawingThread = new std::thread(&Renderer::threadInit);
     }
 
+    static void freeAllMemory() {
+        delete window;
+		
+        for (int i = 0; i < permanentObjects.size(); i++) {
+			delete permanentObjects[i];
+        }
+		permanentObjects.clear();
+		
+        for (int i = 0; i < nextFrame.size(); i++) {
+            delete nextFrame[i];
+        }
+		nextFrame.clear();
+    }
+
 private:
     //SFML always uses the dimensions of window creation, which means we only have to save these once in the constructor.
     static int xPixels;
@@ -43,13 +57,13 @@ public:
         return yPixels;
     }
 
-    static void drawOnce(ThreadSafeShape* toDraw) {
+    static void drawOnce(ThreadSafeDrawable* toDraw) {
         isDrawing.lock();
         nextFrame.push_back(toDraw);
         isDrawing.unlock();
     }
 
-    static void addPermanentObject(ThreadSafeShape* object) {
+    static void addPermanentObject(ThreadSafeDrawable* object) {
         permanentObjects.push_back(object);
     }
     /**

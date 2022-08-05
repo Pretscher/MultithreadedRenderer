@@ -16,9 +16,6 @@
     <Filter Include="Source Files\Rendering">
       <UniqueIdentifier>{fac613d9-ed01-4941-b1e1-b292362b8075}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Rendering\Builders">
-      <UniqueIdentifier>{13721e9d-2d44-4af2-a52f-b54de0dc2c8a}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -27,10 +24,16 @@
     <ClCompile Include="Rendering\Renderer.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="Rendering\Drawables.cpp">
+    <ClCompile Include="Rendering\ThreadSafeObjects.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="Rendering\Mouse.cpp">
+      <Filter>Source Files\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Rendering\ObjectBuilders.hpp">
+      <Filter>Source Files\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Rendering\ObjectBuilders.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
   </ItemGroup>
@@ -38,22 +41,10 @@
     <ClInclude Include="Rendering\Renderer.hpp">
       <Filter>Source Files\Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="Rendering\Builders\CircleBuilder.hpp">
-      <Filter>Source Files\Rendering\Builders</Filter>
-    </ClInclude>
-    <ClInclude Include="Rendering\Builders\RectBuilder.hpp">
-      <Filter>Source Files\Rendering\Builders</Filter>
-    </ClInclude>
-    <ClInclude Include="Rendering\Builders\ShapeBuilder.hpp">
-      <Filter>Source Files\Rendering\Builders</Filter>
-    </ClInclude>
-    <ClInclude Include="Rendering\Builders\TextBuilder.hpp">
-      <Filter>Source Files\Rendering\Builders</Filter>
-    </ClInclude>
     <ClInclude Include="ClockThread.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="Rendering\Drawables.hpp">
+    <ClInclude Include="Rendering\ThreadSafeObjects.hpp">
       <Filter>Source Files\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="Rendering\Mouse.hpp">
