@@ -8,12 +8,8 @@ ts::Drawable::~Drawable() {
 	mtx.unlock();
 }
 
-void ts::Shape::draw() {
-	Renderer::window->draw(*shape);
-}
-
-void ts::Text::draw() {
-	Renderer::window->draw(*text);
+void ts::Drawable::draw() {
+	Renderer::window->draw(*drawable);
 }
 
 

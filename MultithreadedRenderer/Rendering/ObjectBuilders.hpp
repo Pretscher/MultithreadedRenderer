@@ -6,42 +6,30 @@
 #include <optional>
 #include <map>
 
-class DrawableBuilder {
-public:
-    virtual ts::Drawable* build() = 0;
-    virtual ts::Drawable* getWithoutDrawing() = 0;
-};
 
-class ShapeBuilder : DrawableBuilder {
-protected:
-    sf::Shape* shape = nullptr;
+
+
+class CircleBuilder {
+private:
+	sf::CircleShape* circle;
 public:
-    /**
-     * @brief Draw this shape permanently (by adding it to the renderers list of permanent objects) and change it's properties through the pointer.
-     *
-     * @return sf::Drawable*
-     */
-    virtual ts::Shape* build() override {
-        ts::Shape* tsShape = new  ts::Shape(shape);
-        Renderer::addPermanentObject(tsShape);
-        return tsShape;
+    CircleBuilder(float x, float y, float radius) : circle(new sf::CircleShape(radius)) {
+        circle->setPosition(x, y);
     }
-    /**
-     * @brief Get the shape without drawing or adding it to the renderer.
-     *
-     * @return sf::Drawable*
-     */
-    virtual  ts::Shape* getWithoutDrawing() override {
-        return new  ts::Shape(shape);
+	
+    ts::Circle* build() {
+        ts::Circle* tsCircle = new ts::Circle(circle);
+        Renderer::addPermanentObject(tsCircle);
+        return tsCircle;
     }
-    /**
-     * @brief Set the color of this shape.
-     *
-     * @param color
-     * @return ShapeBuilder&
-     */
-    virtual ShapeBuilder& setColor(sf::Color color) {
-        shape->setFillColor(color);
+
+    ts::Circle* getWithoutDrawing() {
+        return new  ts::Circle(circle);
+    }
+	
+
+    CircleBuilder& setColor(sf::Color color) {
+        circle->setFillColor(color);
         return *this;
     }
     /**
@@ -50,28 +38,11 @@ public:
      * @param color
      * @return ShapeBuilder&
      */
-    virtual ShapeBuilder& addOutline(sf::Color color, float thickness) {
-        shape->setOutlineColor(color);
-        shape->setOutlineThickness(thickness);
+    CircleBuilder& addOutline(sf::Color color, float thickness) {
+        circle->setOutlineColor(color);
+        circle->setOutlineThickness(thickness);
         return *this;
     }
-
-    /**
-     * @brief Add a preexisting texture to this shape.
-     *
-     * @param texture
-     * @return ShapeBuilder&
-     */
-    virtual ShapeBuilder& addTexture(sf::Texture& texture) {
-        shape->setTexture(&texture);
-        if (texture.isRepeated() == true) {
-            auto bounds = shape->getGlobalBounds();
-            sf::IntRect rect = sf::IntRect((int)bounds.left, (int)bounds.top, (int)bounds.width, (int)bounds.height);
-            shape->setTextureRect(rect);
-        }//else stretch
-        return *this;
-    }
-
 
     /**
      * @brief Load a texture and add it to this shape.
@@ -80,55 +51,112 @@ public:
      * @param repeat Specifies wether the texture should be repeated or stretched if it is too small for the shape.
      * @return ShapeBuilder&
      */
-    virtual ShapeBuilder& addTexture(std::string texturePath, bool repeat) {
-        sf::Texture texture = loadTexture(texturePath, repeat);
-        shape->setTexture(&texture);
-        if (texture.isRepeated() == true) {
-            auto bounds = shape->getGlobalBounds();
-            sf::IntRect rect = sf::IntRect((int)bounds.left, (int)bounds.top, (int)bounds.width, (int)bounds.height);
-            shape->setTextureRect(rect);
-        }//else stretch
+    CircleBuilder& addTexture(std::string texturePath, bool repeat) {
+        Renderer::queueTextureLoading(texturePath, repeat, circle);
+        return *this;
+    }
+};
+
+class RectBuilder {
+private:
+    sf::RectangleShape* rect;
+    std::string texturePath;
+public:
+    RectBuilder(float x, float y, float width, float height) {
+        rect = new sf::RectangleShape(sf::Vector2f((float)width, (float)height));
+        rect->setPosition(x, y);
+    }
+
+    ts::Rect* build() {
+        ts::Rect* tsShape = new ts::Rect(rect);
+        Renderer::addPermanentObject(tsShape);
+        return tsShape;
+    }
+     ts::Rect* getWithoutDrawing() {
+        return new  ts::Rect(rect);
+    }
+
+
+
+     RectBuilder& setColor(sf::Color color) {
+         rect->setFillColor(color);
+         return *this;
+     }
+     /**
+      * @brief Add an outline for this shape.
+      *
+      * @param color
+      * @return ShapeBuilder&
+      */
+     RectBuilder& addOutline(sf::Color color, float thickness) {
+         rect->setOutlineColor(color);
+         rect->setOutlineThickness(thickness);
+         return *this;
+     }
+
+
+     /**
+      * @brief Load a texture and add it to this shape.
+      *
+      * @param texturePath
+      * @param repeat Specifies wether the texture should be repeated or stretched if it is too small for the shape.
+      * @return ShapeBuilder&
+      */
+     RectBuilder& addTexture(std::string texturePath, bool repeat) {
+         Renderer::queueTextureLoading(texturePath, repeat, rect);
+         return *this;
+     }
+};
+
+class LineBuilder {
+private:
+    sf::RectangleShape* line;
+public:
+    LineBuilder(float x1, float y1, float x2, float y2) {
+        float dX = x2 - x1;
+        float dY = y2 - y1;
+		
+        float defaultThickness = 1.0f;
+        float rot = atan2(dY, dX) * 57.2958f;
+        line = new sf::RectangleShape(sf::Vector2f(sqrt(abs(dX) * abs(dX) + abs(dY) * abs(dY)), defaultThickness));
+        line->setOrigin(0, defaultThickness / 2);
+        line->setRotation(rot);
+        line->setPosition(x1, y1);
+    }
+    
+    LineBuilder& setThickness(float thickness) {
+        line->setScale(line->getScale().x, thickness);
+        line->setOrigin(0, thickness / 2);
         return *this;
     }
 
-private:
-    sf::Texture loadTexture(std::string path, bool repeat) {
-        sf::Texture texture;
-        if (!texture.loadFromFile(path))
-        {
-            std::cout << "failed to load texture of path '" << path << "'";
-            exit(0);
-        }
-        if (repeat == true) {
-            sf::Image img = texture.copyToImage();
-            if (texture.loadFromImage(img) == false) {
-                std::cout << "failed to load texture image of path '" << path << "'";
-                exit(0);
-            }
+    ts::Line* build() {
+        ts::Line* tsShape = new  ts::Line(line);
+        Renderer::addPermanentObject(tsShape);
+        return tsShape;
+    }
+    ts::Line* getWithoutDrawing() {
+        return new  ts::Line(line);
+    }
 
-            texture.setRepeated(true);
-        }
-        return texture;
+    LineBuilder& setColor(sf::Color color) {
+        line->setFillColor(color);
+        return *this;
+    }
+    /**
+     * @brief Add an outline for this shape.
+     *
+     * @param color
+     * @return ShapeBuilder&
+     */
+    LineBuilder& addOutline(sf::Color color, float thickness) {
+        line->setOutlineColor(color);
+        line->setOutlineThickness(thickness);
+        return *this;
     }
 };
 
-class CircleBuilder : public ShapeBuilder {
-public:
-    CircleBuilder(float x, float y, float radius) {
-        shape = new sf::CircleShape(radius);
-        shape->setPosition(x, y);
-    }
-};
-
-class RectBuilder : public ShapeBuilder {
-public:
-    RectBuilder(float x, float y, float width, float height) {
-        shape = new sf::RectangleShape(sf::Vector2f((float)width, (float)height));
-        shape->setPosition(x, y);
-    }
-};
-
-class TextBuilder : public DrawableBuilder {
+class TextBuilder {
 protected:
     sf::Text* text;
     bool fontLoaded = false;
@@ -152,7 +180,7 @@ public:
      *
      * @return sf::Drawable*
      */
-    virtual ts::Text* build() override {
+    ts::Text* build() {
         if (fontLoaded == false) {
             std::cout << "can't build or get text without a font";
             return nullptr;
@@ -166,7 +194,7 @@ public:
      *
      * @return sf::Drawable*
      */
-    virtual ts::Text* getWithoutDrawing() override {
+    ts::Text* getWithoutDrawing() {
         if (fontLoaded == false) {
             std::cout << "can't get text without a font";
             return nullptr;
@@ -193,7 +221,7 @@ public:
         return *this;
     }
 
-    TextBuilder setCharacterSize(int size) {
+    TextBuilder& setCharacterSize(int size) {
         text->setCharacterSize(size);
         return *this;
     }
@@ -211,10 +239,8 @@ public:
 
     TextBuilder& centerToRect(float rectX, float rectY, float rectWidth, float rectHeight);
 
-
-    static std::optional<sf::Font*> loadFont(std::string fontName);
-
 private:
+    static std::optional<sf::Font*> loadFont(std::string fontName);
     static std::map<std::string, sf::Font*> loadedFonts;
 };
 

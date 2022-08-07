@@ -6,19 +6,21 @@
 #include "ClockThread.hpp"
 using namespace std;
 
-ts::Shape *rect, *rect2;
-ts::Shape *circle;
+ts::Rect *rect, *rect2;
+ts::Circle *circle;
+ts::Line* line;
 ts::Text *text;
 
 void init() {
-    rect = RectBuilder(0, 0, 100, 100).setColor(sf::Color::Red).addOutline(sf::Color::Blue, 10).build();
-    rect2 = RectBuilder(0, 0, 100, 100).setColor(sf::Color::Blue).addOutline(sf::Color::Red, 10).build();
-    circle = CircleBuilder(500, 200, 50).setColor(sf::Color::Green).addOutline(sf::Color::Yellow, 10).build();
-    text = TextBuilder(500, 500).setString("Hello world!").setColor(sf::Color::White).build();
+    rect = RectBuilder(0, 0, 100, 100).addTexture("myRecources/Textures/container.jpg", true).build();
+    rect2 = RectBuilder(0, 0, 100, 100).setColor(sf::Color::Blue).build();
+    circle = CircleBuilder(500, 200, 50).addTexture("myRecources/Textures/awesomeface.png", true).build();
+    text = TextBuilder(0, 350).setString("A glorious Text!").setColor(sf::Color::White).build();
+    line = LineBuilder(0, 400, 1000, 400).setColor(sf::Color::White).build();
+    Renderer::addBackground("myRecources/Textures/game-background-hills.jpg", true);
 }
 
 float x;
-bool circleDeleted = false;
 bool goRight;
 void eventloop() {
     if(goRight) {
@@ -26,19 +28,15 @@ void eventloop() {
     } else {
         x--;
     }
-    if(x >= 1000) {
+    if(x >= 300) {
         goRight = false;
-        if (circleDeleted == false) {
-            delete circle;
-            circle = nullptr;
-			circleDeleted = true;
-        }
     } else if(x <= 10) {
         goRight = true;
     }
-    rect->transform(x, 10);
-    rect2->transform(x, 130);
-
+    circle->setRadius(x);
+    rect->transform(x, 0);
+    rect2->transform(x, 100);
+    line->transformFirstPoint(x, x);
 }
 
 int main() {
