@@ -20,8 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Rendering\ObjectBuilders.cpp" />
-    <ClCompile Include="Rendering\ObjectBuilders.hpp" />
     <ClCompile Include="Rendering\ThreadSafeObjects.cpp" />
     <ClCompile Include="Rendering\Mouse.cpp" />
     <ClCompile Include="Rendering\Renderer.cpp" />

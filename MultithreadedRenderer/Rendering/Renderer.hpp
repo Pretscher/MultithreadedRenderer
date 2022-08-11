@@ -17,7 +17,7 @@ public:
 class Renderer {
 private:
 	//Threadsafe objects that are cummulatively locked, drawn and individually unlocked each frame
-    static std::vector<ts::Drawable*> permanentObjects;
+    static std::vector<ts::Drawable> permanentObjects;
 
     static std::thread* renderingThread;
     static std::mutex isDrawing;
@@ -32,7 +32,9 @@ public:
     /** Creates a window and starts a seperate drawing thread.
     */
     static void initWindow() {
-        window = new sf::RenderWindow(sf::VideoMode(1920, 1080), "Rendering!", sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize);
+        sf::ContextSettings settings;
+        settings.antialiasingLevel = 8.0;
+        window = new sf::RenderWindow(sf::VideoMode(1920, 1080), "Rendering!", sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize, settings);
         window->setActive(false);
         xPixels = window->getSize().x;
         yPixels = window->getSize().y;
@@ -46,25 +48,25 @@ public:
         queueTextureLoading(texturePath, repeat, background);
         
         /*We want a threadsafe shape here so that a potential future change to the background from the main thread is safe.*/
-        ts::Rect* tsRect = new ts::Rect(background);
         isDrawing.lock();
         //insert at start of vector so that it is always in the background
-        permanentObjects.insert(permanentObjects.begin(), tsRect);
+        permanentObjects.insert(permanentObjects.begin(), ts::Rect(background));
         isDrawing.unlock();
     }
 
     //Drawing--------------------------------------------------------------------------------------------------------------------------------------
 	
-    static void addPermanentObject(ts::Drawable* object) {
+    static void addPermanentObject(ts::Drawable& object) {
         isDrawing.lock();//dont add objects while drawing. 
         permanentObjects.push_back(object);
         isDrawing.unlock();
     }
 	
-    static void removePermanentObject(ts::Drawable* drawable) {
+    static void deleteObject(const ts::Drawable& drawable) {
         isDrawing.lock();
         for (unsigned int i = 0; i < permanentObjects.size(); i++) {
             if (permanentObjects[i] == drawable) {
+                permanentObjects[i].freeMemory();
                 permanentObjects.erase(permanentObjects.begin() + i);
                 isDrawing.unlock();
                 return;
@@ -74,7 +76,23 @@ public:
         std::cout << "Warning: Object to delete not in array. This is probably a bug." << std::endl;
         isDrawing.unlock();
     }
-
+	
+    static ts::Drawable removeObject(const ts::Drawable& drawable) {
+        ts::Drawable extracted;
+        isDrawing.lock();
+        for (unsigned int i = 0; i < permanentObjects.size(); i++) {
+            if (permanentObjects[i] == drawable) {
+                extracted = permanentObjects[i];
+                permanentObjects.erase(permanentObjects.begin() + i);
+                isDrawing.unlock();
+                return extracted;
+            }
+        }
+        //Object not in array, all good. just unlock.
+        std::cout << "Warning: Object to delete not in array. This is probably a bug." << std::endl;
+        isDrawing.unlock();
+		return extracted;
+    }
     static void drawFrame();
 
 	//End of Rendering--------------------------------------------------------------------------------------------------------------------------------
@@ -82,12 +100,7 @@ public:
     static void freeAllMemory() {
         delete window;
         delete background;
-
-        for (unsigned int i = 0; i < permanentObjects.size(); i++) {
-			delete permanentObjects[i];
-        }
 		permanentObjects.clear();
-        
     }
     static void joinDrawingThread();
 	

@@ -29,7 +29,7 @@ void Renderer::loop() {
 
 //Drawing--------------------------------------------------------------------------------------------------------------------------------------
 
-std::vector<ts::Drawable*> Renderer::permanentObjects;
+std::vector<ts::Drawable> Renderer::permanentObjects;
 void Renderer::drawFrame() {
 	loadAllTextures();
 	window->clear();
@@ -37,13 +37,13 @@ void Renderer::drawFrame() {
 
 	//lock all drawables before drawing, so that they are at the transformation state of the same frame.
 	for (unsigned int i = 0; i < permanentObjects.size(); i++) {
-		permanentObjects[i]->lock();
+		permanentObjects[i].lock();
 	}
 
 	//draw permanent objects
 	for (unsigned int i = 0; i < permanentObjects.size(); i++) {
-		permanentObjects[i]->draw();
-		permanentObjects[i]->unlock();
+		permanentObjects[i].draw();
+		permanentObjects[i].unlock();
 	}
 	isDrawing.unlock();
 	window->display();
