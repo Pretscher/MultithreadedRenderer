@@ -82,52 +82,25 @@ public:
 
 
 	static void updatePriority(ts::Drawable* object) {
-		isDrawing.lock();
-		
-		int oldIndex = -1;
-		int newIndex = -1;
-		for (int i = 0; i < permanentObjects.size(); i++) {
-			if (permanentObjects[i] == object) {
-				oldIndex = i;
-			}
-			if (permanentObjects[i]->getPriority() >= object->getPriority()) {
-				newIndex = i;
-			}
-			if (oldIndex != -1 && newIndex != -1) break;
-		}
-		//push vector elements one to the right (TODO: increase priority => push to the left)
-		for (int i = newIndex; i < oldIndex; i++) {
-			permanentObjects[i + 1] = permanentObjects[i];
-		}
-		permanentObjects[newIndex] = object;
-
-		isDrawing.unlock();
+		removePermanentObject(object);//erase in old place
+		addPermanentObject(object);//reinsert at new place
 	}
 	
+	/*Call this in the destructor of an Object and it will remove itself from the drawing array when deleted.*/
+
 	static void removePermanentObject(ts::Drawable* object) {
+		isDrawing.lock();
 		for (int i = 0; i < permanentObjects.size(); i++) {
 			if (permanentObjects[i] == object) {
 				permanentObjects.erase(permanentObjects.begin() + i);
+				isDrawing.unlock();
 				return;
 			}
 		}
+		isDrawing.unlock();
 	}
 
 	static void drawFrame();
-
-	//End of Rendering--------------------------------------------------------------------------------------------------------------------------------
-
-	static void freeAllMemory() {
-		delete window;
-		for (auto ptr : loadedTextures) {
-			delete ptr.second;
-		}
-		for (auto ptr : permanentObjects) {
-			delete ptr;
-		}
-		loadedTextures.clear();
-		permanentObjects.clear();
-	}
 	static void joinDrawingThread();
 
 	//Utility-----------------------------------------------------------------------------------------------------------------------------------------

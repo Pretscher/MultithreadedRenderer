@@ -67,6 +67,5 @@ int main() {
         Mouse::update();
     }
     Renderer::joinDrawingThread();
-    Renderer::freeAllMemory();
     return 0;
 }
