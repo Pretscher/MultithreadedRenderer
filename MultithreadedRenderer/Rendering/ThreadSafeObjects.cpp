@@ -5,18 +5,21 @@
 
 void ts::Drawable::initDrawableAfterConstruction(sf::Drawable* drawable) {
 	this->drawable = drawable;
-	Renderer::addPermanentObject(*this);
+	Renderer::addPermanentObject(this);
+}
+
+ts::Drawable::~Drawable() {
+	Renderer::removePermanentObject(this);
+	delete drawable;
 }
 
 void ts::Drawable::draw() {
 	Renderer::window->draw(*drawable);
 }
 
-ts::Drawable::Drawable(Drawable&& rect) {
-	mtx = rect.mtx;
-	drawable = rect.drawable;
-	rect.mtx = nullptr;
-	rect.drawable = nullptr;
+void ts::Drawable::setPriority(int priority) {
+	this->priority = priority;
+	Renderer::updatePriority(this);
 }
 
 void ts::Shape::addTexture(std::string texturePath, bool repeat) {

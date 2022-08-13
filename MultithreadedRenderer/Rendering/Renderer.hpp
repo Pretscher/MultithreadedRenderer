@@ -7,144 +7,169 @@
 
 #include "ThreadSafeObjects.hpp"
 
-struct TextureToLoad {
+struct TexturedObjectToLoad {
 public:
-    std::string path;
-    bool repeat;
-    sf::Shape* toApply;
+	TexturedObjectToLoad(std::string path, bool repeat, sf::Shape* toApply) : path(path), repeat(repeat), toApply(toApply) {}
+	std::string path;
+	bool repeat;
+	sf::Shape* toApply;
+	
+	void setTexture(sf::Texture* texture) {
+		toApply->setTexture(texture);
+	}
+
+	void setPriority(int priority) {
+		this->priority = priority;
+	}
+	int getPriority() {
+		return priority;
+	}
+	void makeBackground() {
+		priority = 0;
+	}
+private:
+	int priority = 1;//0 := lowest priority (backgrounds etc)
 };
 
 class Renderer {
 private:
 	//Threadsafe objects that are cummulatively locked, drawn and individually unlocked each frame
-    static std::vector<ts::Drawable> permanentObjects;
+	static std::vector<ts::Drawable*> permanentObjects;
 
-    static std::thread* renderingThread;
-    static std::mutex isDrawing;
-    static void threadInit();
-    static void loop();
+	static std::thread* renderingThread;
+	static std::mutex isDrawing;
+	static void threadInit();
+	static void loop();
 
-    //SFML always uses the dimensions of window creation, which means we only have to save these once in the constructor.
-    static int xPixels, yPixels;
-    static sf::RectangleShape* background;
+	//SFML always uses the dimensions of window creation, which means we only have to save these once in the constructor.
+	static int xPixels, yPixels;
 public:
-    static sf::RenderWindow* window;
-    /** Creates a window and starts a seperate drawing thread.
-    */
-    static void initWindow() {
-        sf::ContextSettings settings;
-        settings.antialiasingLevel = 8.0;
-        window = new sf::RenderWindow(sf::VideoMode(1920, 1080), "Rendering!", sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize, settings);
-        window->setActive(false);
-        xPixels = window->getSize().x;
-        yPixels = window->getSize().y;
-        window->setFramerateLimit(60);
+	static sf::RenderWindow* window;
+	/** Creates a window and starts a seperate drawing thread.
+	*/
+	static void initWindow() {
+		sf::ContextSettings settings;
+		settings.antialiasingLevel = 8.0;
+		window = new sf::RenderWindow(sf::VideoMode(1920, 1080), "Rendering!", sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize, settings);
+		window->setActive(false);
+		xPixels = window->getSize().x;
+		yPixels = window->getSize().y;
+		window->setFramerateLimit(60);
 
-        renderingThread = new std::thread(&Renderer::threadInit);
-    }
-	
-    static void addBackground(std::string texturePath, bool repeat) {
-        background = new sf::RectangleShape(sf::Vector2f(xPixels, yPixels));
-        queueTextureLoading(texturePath, repeat, background);
-        
-        /*We want a threadsafe shape here so that a potential future change to the background from the main thread is safe.*/
-        isDrawing.lock();
-        //insert at start of vector so that it is always in the background
-        permanentObjects.insert(permanentObjects.begin(), ts::Rect(background));
-        isDrawing.unlock();
-    }
+		renderingThread = new std::thread(&Renderer::threadInit);
+	}
 
-    //Drawing--------------------------------------------------------------------------------------------------------------------------------------
+	static void addBackground(std::string texturePath, bool repeat) {
+		(new ts::Rect(0, 0, xPixels, yPixels))->addTexture(texturePath, repeat)->setPriority(0);//0 is lowest priority => drawn in the back.
+	}
+
+	//Drawing--------------------------------------------------------------------------------------------------------------------------------------
+
+	static void addPermanentObject(ts::Drawable* object) {
+		isDrawing.lock();//dont add objects while drawing. 
+		//insert at LAST place in array (drawing order) with right priority (=> drawn in front of its own priority group)
+		for (int i = 0; i < permanentObjects.size(); i++) {
+			if (permanentObjects[i]->getPriority() > object->getPriority()) {
+				permanentObjects.insert(permanentObjects.begin() + i, object);
+				isDrawing.unlock();
+				return;
+			}
+		}
+		//nothing with bigger priority in array => append
+		permanentObjects.push_back(object);
+		isDrawing.unlock();
+	}
+
+
+	static void updatePriority(ts::Drawable* object) {
+		isDrawing.lock();
+		
+		int oldIndex = -1;
+		int newIndex = -1;
+		for (int i = 0; i < permanentObjects.size(); i++) {
+			if (permanentObjects[i] == object) {
+				oldIndex = i;
+			}
+			if (permanentObjects[i]->getPriority() >= object->getPriority()) {
+				newIndex = i;
+			}
+			if (oldIndex != -1 && newIndex != -1) break;
+		}
+		//push vector elements one to the right (TODO: increase priority => push to the left)
+		for (int i = newIndex; i < oldIndex; i++) {
+			permanentObjects[i + 1] = permanentObjects[i];
+		}
+		permanentObjects[newIndex] = object;
+
+		isDrawing.unlock();
+	}
 	
-    static void addPermanentObject(ts::Drawable& object) {
-        isDrawing.lock();//dont add objects while drawing. 
-        permanentObjects.push_back(object);
-        isDrawing.unlock();
-    }
-	
-    static void deleteObject(const ts::Drawable& drawable) {
-        isDrawing.lock();
-        for (unsigned int i = 0; i < permanentObjects.size(); i++) {
-            if (permanentObjects[i] == drawable) {
-                permanentObjects[i].freeMemory();
-                permanentObjects.erase(permanentObjects.begin() + i);
-                isDrawing.unlock();
-                return;
-            }
-        }
-        //Object not in array, all good. just unlock.
-        std::cout << "Warning: Object to delete not in array. This is probably a bug." << std::endl;
-        isDrawing.unlock();
-    }
-	
-    static ts::Drawable removeObject(const ts::Drawable& drawable) {
-        ts::Drawable extracted;
-        isDrawing.lock();
-        for (unsigned int i = 0; i < permanentObjects.size(); i++) {
-            if (permanentObjects[i] == drawable) {
-                extracted = permanentObjects[i];
-                permanentObjects.erase(permanentObjects.begin() + i);
-                isDrawing.unlock();
-                return extracted;
-            }
-        }
-        //Object not in array, all good. just unlock.
-        std::cout << "Warning: Object to delete not in array. This is probably a bug." << std::endl;
-        isDrawing.unlock();
-		return extracted;
-    }
-    static void drawFrame();
+	static void removePermanentObject(ts::Drawable* object) {
+		for (int i = 0; i < permanentObjects.size(); i++) {
+			if (permanentObjects[i] == object) {
+				permanentObjects.erase(permanentObjects.begin() + i);
+				return;
+			}
+		}
+	}
+
+	static void drawFrame();
 
 	//End of Rendering--------------------------------------------------------------------------------------------------------------------------------
 
-    static void freeAllMemory() {
-        delete window;
-        delete background;
+	static void freeAllMemory() {
+		delete window;
+		for (auto ptr : loadedTextures) {
+			delete ptr.second;
+		}
+		for (auto ptr : permanentObjects) {
+			delete ptr;
+		}
+		loadedTextures.clear();
 		permanentObjects.clear();
-    }
-    static void joinDrawingThread();
-	
+	}
+	static void joinDrawingThread();
+
 	//Utility-----------------------------------------------------------------------------------------------------------------------------------------
-	
-    //Width of the window panel, can't be asked directly from the window
-    static int getPixelCountX() {
-        return xPixels;
-    }
-    //Height of the window panel, can't be asked directly from the window
-    static int getPixelCountY() {
-        return yPixels;
-    }
+
+	//Width of the window panel, can't be asked directly from the window
+	static int getPixelCountX() {
+		return xPixels;
+	}
+	//Height of the window panel, can't be asked directly from the window
+	static int getPixelCountY() {
+		return yPixels;
+	}
 
 	//Texture loading---------------------------------------------------------------------------------------------------------------------------------
-    //(This has to be done in Rendering thread because the window has to be activated. Also, doing this here relieves a lot of load from the main thread)
+	//(This has to be done in Rendering thread because the window has to be activated. Also, doing this here relieves a lot of load from the main thread)
 private:
-    static std::map<std::string, sf::Texture*> loadedTextures;
-    static std::vector<TextureToLoad> texturesToLoad;
-    static std::mutex loadingMtx;
+	static std::map<std::string, sf::Texture*> loadedTextures;
+	static std::vector<TexturedObjectToLoad> texturesToLoad;
+	static std::mutex loadingMtx;
 
-    /* Call before drawing! Loads all the textures in "texturesToLoad" by filling the empty Texture pointers in "loadedTextures" and removing the entry from "texturesToLoad"*/
-    static void loadAllTextures();
+	/* Call before drawing! Loads all the textures in "texturesToLoad" by filling the empty Texture pointers in "loadedTextures" and removing the entry from "texturesToLoad"*/
+	static void loadAllTextures();
 
 public:
-    /* Loads the texture in the Rendering Thread before the next drawing operation. Until it is loaded, returns a pointer to an empty texture.
-    */
-    static void queueTextureLoading(std::string path, bool repeat, sf::Shape* toApply) {
-        if (loadedTextures.count(path) == 0) {
-            loadingMtx.lock();
-            texturesToLoad.push_back(TextureToLoad(path, repeat, toApply));
-            loadingMtx.unlock();
-        }
-    }
+	/* Loads the texture in the Rendering Thread before the next drawing operation. Until it is loaded, returns a pointer to an empty texture.*/
+	static void queueTextureLoading(std::string path, bool repeat, sf::Shape* toApply) {
+		if (loadedTextures.count(path) == 0) {
+			loadingMtx.lock();
+			texturesToLoad.push_back(TexturedObjectToLoad(path, repeat, toApply));
+			loadingMtx.unlock();
+		}
+	}
 
-    bool isTextureLoaded(std::string path) {
-        loadingMtx.lock();
-        bool out = loadedTextures.count(path) > 0;
-        loadingMtx.unlock();
-        return out;
-    }
+	bool isTextureLoaded(std::string path) {
+		loadingMtx.lock();
+		bool out = loadedTextures.count(path) > 0;
+		loadingMtx.unlock();
+		return out;
+	}
 
-    //only call when "isTextureLoaded" is true!
-    sf::Texture* getLoadedTexture(std::string path) {
-        return loadedTextures[path];
-    }
+	//only call when "isTextureLoaded" is true!
+	sf::Texture* getLoadedTexture(std::string path) {
+		return loadedTextures[path];
+	}
 };

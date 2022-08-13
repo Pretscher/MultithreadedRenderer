@@ -4,66 +4,44 @@
 namespace ts {
 	class Drawable {
 	protected:
-		std::mutex* mtx;
-		sf::Drawable* drawable = nullptr;
+		std::mutex mtx;
+		sf::Drawable* drawable;
 
 		void initDrawableAfterConstruction(sf::Drawable* drawable);
 	public:
-		Drawable() {
-			mtx = new std::mutex();
-		}
-		//Because of moving and copying freeMemory() has to be called to actually delete the pointers. This just nulls them.
-		~Drawable() {
-			mtx = nullptr;
-			drawable = nullptr;
-		}
-		//Deletes the pointers.
-		void freeMemory() {
-			delete mtx;
-			delete drawable;
-		}
+		Drawable() {}
+		Drawable(const Drawable& rect) = delete;
+		Drawable(Drawable&& rect) = delete;
+		~Drawable();
 		
-		Drawable(const Drawable& rect) {
-			mtx = rect.mtx;
-			drawable = rect.drawable;
-		}
-		
-		//will not delete the pointers.
-		Drawable(Drawable&& rect);
-
 		//Prevents all changes to the drawable (transformations, resizings, recolorings etc.) until the lock is released with unlock(). 
 		void lock() {
-			mtx->lock();
+			mtx.lock();
 		}
 
 		//When called, all changes to the drawable are allowed again.
 		void unlock() {
-			if (mtx->try_lock() == false) {
-				mtx->unlock();
+			if (mtx.try_lock() == false) {
+				mtx.unlock();
 			}
-		}
-		
-		Drawable& operator = (const Drawable& toCopy) {
-			Drawable copy;
-			copy.mtx = toCopy.mtx;
-			copy.drawable = toCopy.drawable;
-			return copy;
-		}
-		
-		bool operator == (const Drawable& toCompare) const {
-			return drawable == toCompare.drawable;
 		}
 
 		/** ONLY CALL IN RENDERER! If you call it from anywhere else, it is not thread-synced*/
 		virtual void draw();
+
+		void setPriority(int priority);
+		
+		int getPriority() {
+			return priority;
+		}
+	private:
+		int priority = 1;
 	};
 
 	class Shape : public Drawable {
 	protected:
-		sf::Shape* shape = nullptr;
-	public:
-		Shape() {}
-
+		sf::Shape* shape;
+		Shape() {};
 		void initShapeAfterConstruction(sf::Shape* shape) {
 			this->shape = shape;
 			initDrawableAfterConstruction(shape);
@@ -83,11 +61,10 @@ namespace ts {
 			shape->setOutlineThickness(thickness);
 		}
 		
-		Shape& transform(float x, float y) {
-			mtx->lock();
+		void transform(float x, float y) {
+			mtx.lock();
 			shape->setPosition(x, y);
-			mtx->unlock();
-			return *this;
+			mtx.unlock();
 		}
 		/**
 		 * @brief Load a texture and add it to this shape.
@@ -115,11 +92,40 @@ namespace ts {
 			initShapeAfterConstruction(rect);
 		}
 
-		Rect& resize(float width, float height) {
-			mtx->lock();
+
+		//Builder functions generated from implementations in shape (done this way to avoid duplicate code)---------------------------------------------------
+
+		
+		Rect* transform(float x, float y) {
+			Shape::transform(x, y);
+			return this;
+		}
+		
+		Rect* addOutline(sf::Color color, float thickness) {
+			Shape::addOutline(color, thickness);
+			return this;
+		}
+		
+		Rect* setColor(sf::Color color) {
+			Shape::setColor(color);
+			return this;
+		}
+		
+		Rect* resize(float width, float height) {
+			mtx.lock();
 			rect->setSize(sf::Vector2f(width, height));
-			mtx->unlock();
-			return *this;
+			mtx.unlock();
+			return this;
+		}
+
+		Rect* addTexture(std::string texturePath, bool repeat) {
+			Shape::addTexture(texturePath, repeat);
+			return this;
+		}
+
+		Rect* setPriority(int priority) {
+			Drawable::setPriority(priority);
+			return this;
 		}
 	};
 
@@ -139,16 +145,18 @@ namespace ts {
 			initDrawableAfterConstruction(this->line);
 		}
 
-		void transformFirstPoint(float x1, float y1) {
+		Line* transformFirstPoint(float x1, float y1) {
 			transform(x1, y1, this->x2, this->y2);
+			return this;
 		}
 
-		void transformSecondPoint(float x2, float y2) {
+		Line* transformSecondPoint(float x2, float y2) {
 			transform(line->getPosition().x, line->getPosition().y, x2, y2);
+			return this;
 		}
 
-		void transform(float x1, float y1, float x2, float y2) {
-			mtx->lock();
+		Line* transform(float x1, float y1, float x2, float y2) {
+			mtx.lock();
 			float dX = x2 - x1;
 			float dY = y2 - y1;
 
@@ -157,11 +165,18 @@ namespace ts {
 			line->setOrigin(0, line->getSize().y / 2);
 			line->setRotation(rot);
 			line->setPosition(x1, y1);
-			mtx->unlock();
+			mtx.unlock();
+			return this;
 		}
 
-		void setColor(sf::Color color) {
+		Line* setColor(sf::Color color) {
 			line->setFillColor(color);
+			return this;
+		}
+
+		Line* setPriority(int priority) {
+			Drawable::setPriority(priority);
+			return this;
 		}
 	};
 
@@ -181,10 +196,36 @@ namespace ts {
 			initShapeAfterConstruction(this->circle);
 		}
 
-		void setRadius(float radius) {
-			mtx->lock();
+		Circle* setRadius(float radius) {
+			mtx.lock();
 			circle->setRadius(radius);
-			mtx->unlock();
+			mtx.unlock();
+			return this;
+		}
+
+		Circle* transform(float x, float y) {
+			Shape::transform(x, y);
+			return this;
+		}
+
+		Circle* addOutline(sf::Color color, float thickness) {
+			Shape::addOutline(color, thickness);
+			return this;
+		}
+
+		Circle* setColor(sf::Color color) {
+			Shape::setColor(color);
+			return this;
+		}
+
+		Circle* addTexture(std::string texturePath, bool repeat) {
+			Shape::addTexture(texturePath, repeat);
+			return this;
+		}
+
+		Circle* setPriority(int priority) {
+			Drawable::setPriority(priority);
+			return this;
 		}
 	};
 
@@ -193,16 +234,35 @@ namespace ts {
 		sf::Text* text;
 	public:
 		Text() {}
-		Text(sf::Text* text) {
-			this->text = text;
+		Text(int x, int y, std::string string) {
+			text = new sf::Text();
+			text->setPosition(x, y);
+			text->setString(string);
 			initDrawableAfterConstruction(text);
 		}
 
-
-		void transform(float x, float y) {
-			mtx->lock();
+		Text* transform(float x, float y) {
 			text->setPosition(x, y);
-			mtx->unlock();
+			return this;
+		}
+
+		Text* setColor(sf::Color color) {
+			mtx.lock();
+			text->setFillColor(color);
+			mtx.unlock();
+			return this;
+		}
+
+		Text* setString(std::string string) {
+			mtx.lock();
+			text->setString(string);
+			mtx.unlock();
+			return this;
+		}
+		
+		Text* setPriority(int priority) {
+			Drawable::setPriority(priority);
+			return this;
 		}
 	};
 
