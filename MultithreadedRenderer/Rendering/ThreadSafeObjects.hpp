@@ -21,9 +21,7 @@ namespace ts {
 
 		//When called, all changes to the drawable are allowed again.
 		void unlock() {
-			if (mtx.try_lock() == false) {
-				mtx.unlock();
-			}
+			mtx.unlock();
 		}
 
 		/** ONLY CALL IN RENDERER! If you call it from anywhere else, it is not thread-synced*/
@@ -48,7 +46,9 @@ namespace ts {
 		}
 
 		void setColor(sf::Color color) {
+			mtx.lock();
 			shape->setFillColor(color);
+			mtx.unlock();
 		}
 		/**
 		 * @brief Add an outline for this shape.
@@ -57,8 +57,10 @@ namespace ts {
 		 * @return Shape* this
 		 */
 		void addOutline(sf::Color color, float thickness) {
+			mtx.lock();
 			shape->setOutlineColor(color);
 			shape->setOutlineThickness(thickness);
+			mtx.unlock();
 		}
 		
 		void transform(float x, float y) {

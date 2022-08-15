@@ -60,7 +60,7 @@ int main() {
     sf::Event eventCatcher{};
     while(Renderer::window->isOpen()) {
       //  this_thread::sleep_for(1ms);
-        sleepAPI.millisleep(64);
+        sleepAPI.millisleep(16);
         while (Renderer::window->pollEvent(eventCatcher)) {
             if (eventCatcher.type == sf::Event::Closed) {
                 Renderer::window->close();
