@@ -47,7 +47,7 @@ public:
 	static sf::RenderWindow* window;
 	/** Creates a window and starts a seperate drawing thread.
 	*/
-	static void initWindow() {
+	static void init() {
 		sf::ContextSettings settings;
 		settings.antialiasingLevel = 8.0;
 		window = new sf::RenderWindow(sf::VideoMode(1920, 1080), "Rendering!", sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize, settings);

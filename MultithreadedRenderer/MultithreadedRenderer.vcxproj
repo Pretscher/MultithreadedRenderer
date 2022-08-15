@@ -23,12 +23,14 @@
     <ClCompile Include="Rendering\ThreadSafeObjects.cpp" />
     <ClCompile Include="Rendering\Mouse.cpp" />
     <ClCompile Include="Rendering\Renderer.cpp" />
+    <ClCompile Include="SleepAPI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Rendering\ThreadSafeObjects.hpp" />
     <ClInclude Include="Rendering\Mouse.hpp" />
     <ClInclude Include="Rendering\Renderer.hpp" />
     <ClInclude Include="ClockThread.hpp" />
+    <ClInclude Include="SleepAPI.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

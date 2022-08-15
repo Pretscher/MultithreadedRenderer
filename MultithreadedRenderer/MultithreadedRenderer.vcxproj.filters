@@ -30,6 +30,9 @@
     <ClCompile Include="Rendering\Mouse.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="SleepAPI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Rendering\Renderer.hpp">
@@ -43,6 +46,9 @@
     </ClInclude>
     <ClInclude Include="Rendering\Mouse.hpp">
       <Filter>Source Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="SleepAPI.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
