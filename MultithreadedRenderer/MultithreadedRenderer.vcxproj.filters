@@ -30,7 +30,7 @@
     <ClCompile Include="Rendering\Mouse.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="SleepAPI.cpp">
+    <ClCompile Include="Rendering\SleepAPI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -38,16 +38,13 @@
     <ClInclude Include="Rendering\Renderer.hpp">
       <Filter>Source Files\Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="ClockThread.hpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="Rendering\ThreadSafeObjects.hpp">
       <Filter>Source Files\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="Rendering\Mouse.hpp">
       <Filter>Source Files\Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="SleepAPI.hpp">
+    <ClInclude Include="Rendering\SleepAPI.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

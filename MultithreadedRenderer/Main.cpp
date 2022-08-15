@@ -1,9 +1,8 @@
-#include "SleepAPI.hpp"
+#include "Rendering/SleepAPI.hpp"
 #include "Rendering/Renderer.hpp"
 #include "Rendering/Mouse.hpp"
 #include <iostream>
 
-#include "ClockThread.hpp"
 using namespace std;
 
 class Events {
@@ -25,8 +24,8 @@ public:
         Renderer::addBackground("myRecources/Textures/game-background-hills.jpg", true);//although called last, has priority 0 => is background
     }
 
-    float x;
-    bool goRight;
+    float x = 0.0f;
+    bool goRight = true;
     void update() {
         if (goRight) {
             x++;
