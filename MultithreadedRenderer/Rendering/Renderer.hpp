@@ -1,11 +1,14 @@
 #pragma once
+#include "ThreadSafeObjects.hpp"
+#include "SleepAPI.hpp"
+#include "Mouse.hpp"
+
 #include <iostream>
 #include <vector>
 #include <thread>
 #include <mutex>
 #include "SFML/Graphics.hpp"
 
-#include "ThreadSafeObjects.hpp"
 
 struct TexturedObjectToLoad {
 public:
@@ -47,7 +50,8 @@ public:
 	static sf::RenderWindow* window;
 	/** Creates a window and starts a seperate drawing thread.
 	*/
-	static void init() {
+
+	static void initSettings() {
 		sf::ContextSettings settings;
 		settings.antialiasingLevel = 8;
 		window = new sf::RenderWindow(sf::VideoMode(1920, 1080), "Rendering!", sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize, settings);
@@ -55,8 +59,30 @@ public:
 		xPixels = window->getSize().x;
 		yPixels = window->getSize().y;
 		window->setFramerateLimit(60);
+	}
+public:
 
+	static void init() {
+		initSettings();
 		renderingThread = new std::thread(&Renderer::threadInit);
+	}
+
+	static void startEventloop(void (*callbackEventloop)()) {
+		SleepAPI sleepAPI{};//for way more accurate sleeps than this_thread::sleep allows
+		sf::Event eventCatcher{};
+		//Event loop of main thread main thread
+		while (Renderer::window->isOpen()) {
+			sleepAPI.millisleep(16);
+			while (Renderer::window->pollEvent(eventCatcher)) {
+				if (eventCatcher.type == sf::Event::Closed) {
+					Renderer::window->close();
+					break;
+				}
+			}
+			callbackEventloop();
+			Mouse::update();
+		}
+		Renderer::joinDrawingThread();//when finished, join the drawing thread before exiting
 	}
 
 	static void addBackground(std::string texturePath, bool repeat) {

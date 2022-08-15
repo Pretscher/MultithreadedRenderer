@@ -1,4 +1,5 @@
 #include "Mouse.hpp"
+#include "Renderer.hpp"
 
 sf::Vector2i Mouse::lastClickPos, Mouse::lastFinishedClickPos;
 sf::Vector2i Mouse::lastMousePos;//for if the mouse leaves the window

@@ -1,4 +1,5 @@
-#include "Renderer.hpp"
+#pragma once
+#include "SFML/Graphics.hpp"
 
 class Mouse {
 public:

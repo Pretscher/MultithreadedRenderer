@@ -1,9 +1,8 @@
-#include "Rendering/SleepAPI.hpp"
 #include "Rendering/Renderer.hpp"
-#include "Rendering/Mouse.hpp"
-#include <iostream>
 
-using namespace std;
+/*we dont want the Renderer to have to know Events(and the flexibility to not use Events at all), so we use a void* instead of an Events::void pointer.
+* Thus we have to pass an actual void which is declared here.*/
+void callbackHelp();
 
 class Events {
 private:
@@ -14,13 +13,13 @@ private:
     ts::Text* text;
 public:
     Events() {
+
         rect = (new ts::Rect(0, 0, 200, 200))->addTexture("myRecources/Textures/container.jpg", true)->setPriority(2);//should not be overdrawn by second rect
         rect2 = (new ts::Rect(0, 100, 200, 200))->addOutline(sf::Color::Red, 10)->setColor(sf::Color::Blue);
         circle = (new ts::Circle(1000, 200, 50))->setColor(sf::Color::Green)->addOutline(sf::Color::Yellow, 5);
         circle2 = (new ts::Circle(500, 200, 50))->addTexture("myRecources/Textures/awesomeface.png", true);
         line = (new ts::Line(1600, 0, 1600, 1080))->setColor(sf::Color::Red);
         text = (new ts::Text(1600, 0, "A glorious Text!"))->setColor(sf::Color::Green);
-
         Renderer::addBackground("myRecources/Textures/game-background-hills.jpg", true);//although called last, has priority 0 => is background
     }
 
@@ -52,23 +51,14 @@ public:
     }
 };
 
+Events* events;
+void callbackHelp() {
+    events->update();
+}
+
 int main() {
     Renderer::init();
-    Events myEvents{};
-    SleepAPI sleepAPI{};
-    sf::Event eventCatcher{};
-    while(Renderer::window->isOpen()) {
-      //  this_thread::sleep_for(1ms);
-        sleepAPI.millisleep(16);
-        while (Renderer::window->pollEvent(eventCatcher)) {
-            if (eventCatcher.type == sf::Event::Closed) {
-                Renderer::window->close();
-                break;
-            }
-        }
-        myEvents.update();
-        Mouse::update();
-    }
-    Renderer::joinDrawingThread();
+    events = new Events{};
+    Renderer::startEventloop(&callbackHelp);
     return 0;
 }
