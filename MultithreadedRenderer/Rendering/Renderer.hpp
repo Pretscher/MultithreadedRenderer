@@ -49,7 +49,7 @@ public:
 	*/
 	static void init() {
 		sf::ContextSettings settings;
-		settings.antialiasingLevel = 8.0;
+		settings.antialiasingLevel = 8;
 		window = new sf::RenderWindow(sf::VideoMode(1920, 1080), "Rendering!", sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize, settings);
 		window->setActive(false);
 		xPixels = window->getSize().x;
@@ -60,7 +60,7 @@ public:
 	}
 
 	static void addBackground(std::string texturePath, bool repeat) {
-		(new ts::Rect(0, 0, xPixels, yPixels))->addTexture(texturePath, repeat)->setPriority(0);//0 is lowest priority => drawn in the back.
+		(new ts::Rect(0, 0, (float)xPixels, (float)yPixels))->addTexture(texturePath, repeat)->setPriority(0);//0 is lowest priority => drawn in the back.
 	}
 
 	//Drawing--------------------------------------------------------------------------------------------------------------------------------------

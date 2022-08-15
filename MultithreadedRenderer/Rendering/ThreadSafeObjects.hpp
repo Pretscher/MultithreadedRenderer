@@ -5,7 +5,7 @@ namespace ts {
 	class Drawable {
 	protected:
 		std::mutex mtx;
-		sf::Drawable* drawable;
+		sf::Drawable* drawable = nullptr;
 
 		void initDrawableAfterConstruction(sf::Drawable* drawable);
 	public:
@@ -38,7 +38,7 @@ namespace ts {
 
 	class Shape : public Drawable {
 	protected:
-		sf::Shape* shape;
+		sf::Shape* shape = nullptr;
 		Shape() {};
 		void initShapeAfterConstruction(sf::Shape* shape) {
 			this->shape = shape;
@@ -82,14 +82,14 @@ namespace ts {
 	protected:
 		sf::RectangleShape* rect;
 	public:
-		Rect() {}
+		Rect() = delete;
 
-		Rect(sf::RectangleShape* rect) {
+		Rect(sf::RectangleShape* rect) : rect(rect) {
 			this->rect = rect;
 			initShapeAfterConstruction(rect);
 		}
 		
-		Rect(int x, int y, int width, int height) : rect(new sf::RectangleShape(sf::Vector2f(width, height))) {
+		Rect(float x, float y, float width, float height) : rect(new sf::RectangleShape(sf::Vector2f(width, height))) {
 			rect->setPosition(x, y);
 			initShapeAfterConstruction(rect);
 		}
@@ -136,12 +136,11 @@ namespace ts {
 		sf::RectangleShape* line;
 		float x2, y2;
 	public:
-		Line() {}
+		Line() = delete;
 
-		Line(float x1, float y1, float x2, float y2) {
+		Line(float x1, float y1, float x2, float y2) : line(new sf::RectangleShape()) {
 			this->x2 = x2;
 			this->y2 = y2;
-			line = new sf::RectangleShape();
 			transform(x1, y1, x2, y2);
 			
 			initDrawableAfterConstruction(this->line);
@@ -186,14 +185,12 @@ namespace ts {
 	protected:
 		sf::CircleShape* circle;
 	public:
-		Circle() {};
-		Circle(sf::CircleShape* circle) {
-			this->circle = circle;
+		Circle() = delete;
+		Circle(sf::CircleShape* circle) : circle(circle) {
 			initShapeAfterConstruction(this->circle);
 		}
 		
-		Circle(int x, int y, int radius) {
-			circle = new sf::CircleShape(radius);
+		Circle(float x, float y, float radius) : circle(new sf::CircleShape(radius)) {
 			circle->setPosition(x, y);
 			initShapeAfterConstruction(this->circle);
 		}
@@ -235,8 +232,8 @@ namespace ts {
 	protected:
 		sf::Text* text;
 	public:
-		Text() {}
-		Text(int x, int y, std::string string) {
+		Text() = delete;
+		Text(float x, float y, std::string string) : text(new sf::Text()) {
 			text = new sf::Text();
 			text->setPosition(x, y);
 			text->setString(string);
