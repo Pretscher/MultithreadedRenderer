@@ -131,19 +131,27 @@ namespace ts {
 		}
 	};
 
-	class Line : public Drawable {
+	class Line : public Shape {
 	protected:
 		sf::RectangleShape* line;
 		float x2, y2;
 	public:
 		Line() = delete;
 
-		Line(float x1, float y1, float x2, float y2) : line(new sf::RectangleShape()) {
+		Line(float x1, float y1, float x2, float y2) 
+			: line(new sf::RectangleShape(sf::Vector2(0.0f, 5.0f))) {//init with a default thickness of 5 pixels
 			this->x2 = x2;
 			this->y2 = y2;
 			transform(x1, y1, x2, y2);
 			
-			initDrawableAfterConstruction(this->line);
+			initShapeAfterConstruction(this->line);
+		}
+
+		Line* setThickness(float thickness) {
+			mtx.lock();
+			line->setSize(sf::Vector2f(line->getSize().x, thickness));
+			mtx.unlock();
+			return this;
 		}
 
 		Line* transformFirstPoint(float x1, float y1) {
@@ -171,7 +179,7 @@ namespace ts {
 		}
 
 		Line* setColor(sf::Color color) {
-			line->setFillColor(color);
+			Shape::setColor(color);
 			return this;
 		}
 

@@ -18,11 +18,11 @@ public:
         rect2 = (new ts::Rect(0, 100, 200, 200))->addOutline(sf::Color::Red, 10)->setColor(sf::Color::Blue);
         circle = (new ts::Circle(1000, 200, 50))->setColor(sf::Color::Green)->addOutline(sf::Color::Yellow, 5);
         circle2 = (new ts::Circle(500, 200, 50))->addTexture("Textures/awesomeface.png", true);
-        line = (new ts::Line(1600, 0, 1600, 1080))->setColor(sf::Color::Red);
+        line = (new ts::Line(500, 0, 500, 1080))->setColor(sf::Color::Red)->setThickness(1.0f);
         text = (new ts::Text(1600, 0, "A glorious Text!"))->setColor(sf::Color::Green);
-        Renderer::addBackground("Textures/game-background-hills.jpg", true);//although called last, has priority 0 => is background
+      //  Renderer::addBackground("Textures/game-background-hills.jpg", true);//although called last, has priority 0 => is background
     }
-
+   
     float x = 0.0f;
     bool goRight = true;
     void update() {
