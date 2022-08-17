@@ -241,11 +241,25 @@ namespace ts {
 		sf::Text* text;
 	public:
 		Text() = delete;
-		Text(float x, float y, std::string string) : text(new sf::Text()) {
+		Text(float x, float y, std::string displayedText) : text(new sf::Text()) {
 			text = new sf::Text();
 			text->setPosition(x, y);
-			text->setString(string);
+			text->setString(displayedText);
+			this->setFont("Fonts/calibri.ttf");//default font is calibri
 			initDrawableAfterConstruction(text);
+		}
+
+		Text* setFont(std::string fontPath) {
+			sf::Font* font = loadFont(fontPath);
+			setFont(font);
+			return this;
+		}
+
+		Text* setFont(sf::Font* font) {
+			mtx.lock();
+			text->setFont(*font);
+			mtx.unlock();
+			return this;
 		}
 
 		Text* transform(float x, float y) {
@@ -271,6 +285,8 @@ namespace ts {
 			Drawable::setPriority(priority);
 			return this;
 		}
+	private:
+		//loaded in main thread because loading a font is not incredibly costly and I can't be bothered to put it into the Rendering thread like texture loading
+		sf::Font* loadFont(std::string fontPath);
 	};
-
 }
