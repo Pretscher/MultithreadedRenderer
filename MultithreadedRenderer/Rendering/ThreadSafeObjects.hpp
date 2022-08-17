@@ -62,6 +62,7 @@ namespace ts {
 			shape->setFillColor(color);
 			mtx.unlock();
 		}
+	public:
 		/**
 		 * @brief Add an outline for this shape.
 		 *
@@ -80,6 +81,33 @@ namespace ts {
 			shape->setPosition(x, y);
 			mtx.unlock();
 		}
+
+		void setX(float x) {
+			mtx.lock();
+			shape->setPosition(x, shape->getPosition().y);
+			mtx.unlock();
+		}
+
+		void setY(float y) {
+			mtx.lock();
+			shape->setPosition(shape->getPosition().x, y);
+			mtx.unlock();
+		}
+		
+		int getX() {
+			mtx.lock();
+			int x = shape->getPosition().x;
+			mtx.unlock();
+			return x;
+		}
+
+		int getY() {
+			mtx.lock();
+			int y = shape->getPosition().y;
+			mtx.unlock();
+			return y;
+		}
+
 		/**
 		 * @brief Load a texture and add it to this shape.
 		 *
@@ -124,22 +152,6 @@ namespace ts {
 
 		//Builder functions generated from implementations in shape (done this way to avoid duplicate code)---------------------------------------------------
 
-		
-		Rect* transform(float x, float y) {
-			Shape::transform(x, y);
-			return this;
-		}
-		
-		Rect* setX(float x) {
-			Shape::transform(x, rect->getPosition().y);
-			return this;
-		}
-
-		Rect* setY(float y) {
-			Shape::transform(rect->getPosition().x, y);
-			return this;
-		}
-
 		Rect* addOutline(sf::Color color, float thickness) {
 			Shape::addOutline(color, thickness);
 			return this;
@@ -170,7 +182,7 @@ namespace ts {
 		}
 	};
 
-	class Line : public Shape {
+	class Line : public Drawable {
 	protected:
 		sf::RectangleShape* line;
 		float x2, y2;
@@ -183,7 +195,7 @@ namespace ts {
 			this->y2 = y2;
 			transform(x1, y1, x2, y2);
 			
-			initShapeAfterConstruction(this->line);
+			initDrawableAfterConstruction(this->line);
 		}
 
 		Line* setThickness(float thickness) {
@@ -218,7 +230,9 @@ namespace ts {
 		}
 
 		Line* setColor(sf::Color color) {
-			Shape::setColor(color);
+			mtx.lock();
+			line->setFillColor(color);
+			mtx.unlock();
 			return this;
 		}
 	};
@@ -241,11 +255,6 @@ namespace ts {
 			mtx.lock();
 			circle->setRadius(radius);
 			mtx.unlock();
-			return this;
-		}
-
-		Circle* transform(float x, float y) {
-			Shape::transform(x, y);
 			return this;
 		}
 
@@ -315,7 +324,7 @@ namespace ts {
 			rect.left = ((float)width / 2) - (rect.width / 2);
 			rect.top = ((float)height / 2) - ((float)maxHeight / 2) - (rect.height - maxHeight) + (((float)rect.height - (text->getCharacterSize() * 1.5))) / 2;
 
-			text->setPosition(rect.left + x, rect.top + y);
+			transform(rect.left + x, rect.top + y);
 			return this;
 		}
 
@@ -336,10 +345,6 @@ namespace ts {
 			return this;
 		}
 
-		Text* transform(float x, float y) {
-			text->setPosition(x, y);
-			return this;
-		}
 
 		Text* setColor(sf::Color color) {
 			mtx.lock();
@@ -360,6 +365,12 @@ namespace ts {
 			text->setCharacterSize(characterSize);
 			mtx.unlock();
 			return this;
+		}
+
+		Text* transform(float x, float y) {
+			mtx.lock();
+			text->setPosition(x, y);
+			mtx.unlock();
 		}
 
 	private:
