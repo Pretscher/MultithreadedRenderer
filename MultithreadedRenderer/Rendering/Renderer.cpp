@@ -9,10 +9,13 @@ int Renderer::yPixels;
 
 //Multithreading------------------------------------------------------------------------------------------------------------------------------
 std::thread* Renderer::renderingThread;
+std::thread* Renderer::tryApplyingChanges;
 std::mutex Renderer::isDrawing;
 void Renderer::joinDrawingThread() {
 	renderingThread->join();
 	delete renderingThread;
+	tryApplyingChanges->join();
+	delete tryApplyingChanges;
 }
 
 void Renderer::threadInit() {

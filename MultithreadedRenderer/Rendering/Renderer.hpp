@@ -40,6 +40,7 @@ private:
 	static std::vector<ts::Drawable*> permanentObjects;
 
 	static std::thread* renderingThread;
+	static std::thread* tryApplyingChanges;
 	static std::mutex isDrawing;
 	static void threadInit();
 	static void loop();
@@ -62,17 +63,31 @@ public:
 	}
 public:
 
+	static void loopTryApplyingChanges() {
+		SleepAPI sleepAPI{};//for way more accurate sleeps than this_thread::sleep allows
+		while (window->isOpen()) {
+			sleepAPI.millisleep(1);
+			if (isDrawing.try_lock() == true) {
+				for (int i = 0; i < permanentObjects.size(); i++) {
+					permanentObjects[i]->applyChanges();
+				}
+				isDrawing.unlock();
+			}
+		}
+	}
+
 	static void init() {
 		initSettings();
-
 	}
 
 	static void startEventloop(void (*callbackEventloop)()) {
 		renderingThread = new std::thread(&Renderer::threadInit);
+		tryApplyingChanges = new std::thread(&Renderer::loopTryApplyingChanges);
+		
 		SleepAPI sleepAPI{};//for way more accurate sleeps than this_thread::sleep allows
 		sf::Event eventCatcher{};
 		//Event loop of main thread main thread
-		while (Renderer::window->isOpen()) {
+		while (window->isOpen()) {
 			sleepAPI.millisleep(16);
 			while (Renderer::window->pollEvent(eventCatcher)) {
 				if (eventCatcher.type == sf::Event::Closed) {

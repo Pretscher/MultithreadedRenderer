@@ -44,6 +44,7 @@ namespace ts {
 			return temp;
 		}
 
+		virtual void applyChanges() {}
 		/** ONLY CALL IN RENDERER! If you call it from anywhere else, it is not thread-synced*/
 		virtual void draw();
 	};
@@ -56,55 +57,75 @@ namespace ts {
 			this->shape = shape;
 			initDrawableAfterConstruction(shape);
 		}
-
-		void setColor(sf::Color color) {
-			mtx.lock();
-			shape->setFillColor(color);
-			mtx.unlock();
-		}
-	public:
 		/**
 		 * @brief Add an outline for this shape.
 		 *
 		 * @param color
 		 * @return Shape* this
 		 */
-		void addOutline(sf::Color color, float thickness) {
-			mtx.lock();
-			shape->setOutlineColor(color);
-			shape->setOutlineThickness(thickness);
-			mtx.unlock();
+	protected:
+		float actualX = 0.0f, actualY = 0.0f, actualWidth = 0.0f, actualHeight = 0.0f;
+		bool positionChanged = false, sizeChanged = false, colorChanged = false;
+		sf::Color actualColor;
+		std::mutex actualDataMtx;
+	public:
+		void applyChanges() override {
+			actualDataMtx.lock();
+			if (positionChanged == true) {
+				shape->setPosition(actualX, actualY);
+			}
+			if (sizeChanged == true) {
+				shape->setScale(sf::Vector2f(actualWidth, actualHeight));
+			}
+			if (colorChanged == true) {
+				shape->setFillColor(actualColor);
+			}
+			actualDataMtx.unlock();
 		}
+
 		
 		void transform(float x, float y) {
-			mtx.lock();
-			shape->setPosition(x, y);
-			mtx.unlock();
+			actualDataMtx.lock();
+			actualX = x;
+			actualY = y;
+			positionChanged = true;
+			actualDataMtx.unlock();
+		}
+
+		void resize(float width, float height) {
+			actualDataMtx.lock();
+			actualWidth = width;
+			actualHeight = height;
+			sizeChanged = true;
+			actualDataMtx.unlock();
+		}
+
+		void setColor(sf::Color color) {
+			actualDataMtx.lock();
+			actualColor = color;
+			colorChanged = true;
+			actualDataMtx.unlock();
 		}
 
 		void setX(float x) {
-			mtx.lock();
-			shape->setPosition(x, shape->getPosition().y);
-			mtx.unlock();
+			transform(x, actualY);
 		}
 
 		void setY(float y) {
-			mtx.lock();
-			shape->setPosition(shape->getPosition().x, y);
-			mtx.unlock();
+			transform(actualX, y);
 		}
 		
 		int getX() {
-			mtx.lock();
-			int x = shape->getPosition().x;
-			mtx.unlock();
+			actualDataMtx.lock();
+			int x = actualX;
+			actualDataMtx.unlock();
 			return x;
 		}
 
 		int getY() {
-			mtx.lock();
-			int y = shape->getPosition().y;
-			mtx.unlock();
+			actualDataMtx.lock();
+			int y = actualY;
+			actualDataMtx.unlock();
 			return y;
 		}
 
@@ -116,18 +137,24 @@ namespace ts {
 		 * @return Shape* this
 		 */
 		void addTexture(std::string texturePath, bool repeat);
-		
-	public:
-		sf::Color getColor() {
+
+		void addOutline(sf::Color color, float thickness) {
 			mtx.lock();
-			sf::Color temp = shape->getFillColor();
+			shape->setOutlineColor(color);
+			shape->setOutlineThickness(thickness);
 			mtx.unlock();
+		}
+		
+		sf::Color getColor() {
+			actualDataMtx.lock();
+			sf::Color temp = actualColor;
+			actualDataMtx.unlock();
 			return temp;
 		}
 
 		sf::Vector2f getPosition() {
 			mtx.lock();
-			sf::Vector2f temp = shape->getPosition();
+			sf::Vector2f temp(actualX, actualY);
 			mtx.unlock();
 			return temp;
 		}
@@ -161,13 +188,7 @@ namespace ts {
 			Shape::setColor(color);
 			return this;
 		}
-		
-		Rect* resize(float width, float height) {
-			mtx.lock();
-			rect->setSize(sf::Vector2f(width, height));
-			mtx.unlock();
-			return this;
-		}
+
 
 		Rect* addTexture(std::string texturePath, bool repeat) {
 			Shape::addTexture(texturePath, repeat);
@@ -176,7 +197,7 @@ namespace ts {
 
 		sf::Vector2f getSize() {
 			mtx.lock();
-			sf::Vector2f temp = rect->getSize();
+			sf::Vector2f temp(actualWidth, actualHeight);
 			mtx.unlock();
 			return temp;
 		}
@@ -251,13 +272,6 @@ namespace ts {
 			initShapeAfterConstruction(this->circle);
 		}
 
-		Circle* setRadius(float radius) {
-			mtx.lock();
-			circle->setRadius(radius);
-			mtx.unlock();
-			return this;
-		}
-
 		Circle* addOutline(sf::Color color, float thickness) {
 			Shape::addOutline(color, thickness);
 			return this;
@@ -272,12 +286,32 @@ namespace ts {
 			Shape::addTexture(texturePath, repeat);
 			return this;
 		}
+	protected:
+		int actualRadius = 0;
+		bool radiusChanged = false;
+	public:
+		Circle* setRadius(float radius) {
+			actualDataMtx.lock();
+			actualRadius = radius;
+			radiusChanged = true;
+			actualDataMtx.unlock();
+			return this;
+		}
 
 		float getRadius() {
-			mtx.lock();
-			float temp = circle->getRadius();
-			mtx.unlock();
+			actualDataMtx.lock();
+			float temp = actualRadius;
+			actualDataMtx.unlock();
 			return temp;
+		}
+
+		void applyChanges() {
+			Shape::applyChanges();
+			actualDataMtx.lock();
+			if (radiusChanged == true) {
+				circle->setRadius(actualRadius);
+			}
+			actualDataMtx.unlock();
 		}
 	};
 
