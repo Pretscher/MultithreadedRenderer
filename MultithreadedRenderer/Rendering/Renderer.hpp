@@ -151,11 +151,13 @@ private:
 	static void loadAllTextures();
 
 public:
-	/* Loads the texture in the Rendering Thread before the next drawing operation. Until it is loaded, returns a pointer to an empty texture.*/
+	/** @brief !Starting directory is Rendering/recources!
+	* Loads the texture in the Rendering Thread before the next drawing operation. Until it is loaded, returns a pointer to an empty texture.*/
 	static void queueTextureLoading(std::string path, bool repeat, sf::Shape* toApply) {
+		std::string fullPath = "Rendering/recources/" + path;
 		if (loadedTextures.count(path) == 0) {
 			loadingMtx.lock();
-			texturesToLoad.push_back(TexturedObjectToLoad(path, repeat, toApply));
+			texturesToLoad.push_back(TexturedObjectToLoad(fullPath, repeat, toApply));
 			loadingMtx.unlock();
 		}
 	}
