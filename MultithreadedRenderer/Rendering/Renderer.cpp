@@ -55,7 +55,7 @@ std::vector<TexturedObjectToLoad> Renderer::texturesToLoad;
 std::mutex Renderer::loadingMtx;
 void Renderer::loadAllTextures() {
 	loadingMtx.lock();
-	for (int i = 0; i < texturesToLoad.size(); i++) {
+	for (size_t i = 0; i < texturesToLoad.size(); i++) {
 		TexturedObjectToLoad& toLoad = texturesToLoad[i];
 		sf::Texture* texture = new sf::Texture();
 		if (!texture->loadFromFile(toLoad.path)) {

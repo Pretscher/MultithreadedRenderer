@@ -94,7 +94,7 @@ public:
 	static void addPermanentObject(ts::Drawable* object) {
 		isDrawing.lock();//dont add objects while drawing. 
 		//insert at LAST place in array (drawing order) with right priority (=> drawn in front of its own priority group)
-		for (int i = 0; i < permanentObjects.size(); i++) {
+		for (size_t i = 0; i < permanentObjects.size(); i++) {
 			if (permanentObjects[i]->getPriority() > object->getPriority()) {
 				permanentObjects.insert(permanentObjects.begin() + i, object);
 				isDrawing.unlock();
@@ -116,7 +116,7 @@ public:
 
 	static void removePermanentObject(ts::Drawable* object) {
 		isDrawing.lock();
-		for (int i = 0; i < permanentObjects.size(); i++) {
+		for (size_t i = 0; i < permanentObjects.size(); i++) {
 			if (permanentObjects[i] == object) {
 				permanentObjects.erase(permanentObjects.begin() + i);
 				isDrawing.unlock();
