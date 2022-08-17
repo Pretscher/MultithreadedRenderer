@@ -9,13 +9,10 @@ int Renderer::yPixels;
 
 //Multithreading------------------------------------------------------------------------------------------------------------------------------
 std::thread* Renderer::renderingThread;
-std::thread* Renderer::tryApplyingChanges;
 std::mutex Renderer::isDrawing;
 void Renderer::joinDrawingThread() {
 	renderingThread->join();
 	delete renderingThread;
-	tryApplyingChanges->join();
-	delete tryApplyingChanges;
 }
 
 void Renderer::threadInit() {
@@ -50,8 +47,11 @@ void Renderer::drawFrame() {
 		permanentObjects[i]->unlock();
 	}
 	isDrawing.unlock();
-
 	window->display();
+	
+	for (int i = 0; i < permanentObjects.size(); i++) {
+		permanentObjects[i]->applyChanges();
+	}
 }
 
 //Textures-------------------------------------------------------------------------------------------------------------

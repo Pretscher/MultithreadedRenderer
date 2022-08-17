@@ -405,6 +405,7 @@ namespace ts {
 			mtx.lock();
 			text->setPosition(x, y);
 			mtx.unlock();
+			return this;
 		}
 
 	private:
