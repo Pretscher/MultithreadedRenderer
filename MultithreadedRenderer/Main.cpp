@@ -14,7 +14,7 @@ private:
 public:
     Events() {
         //example drawings
-        rect = (new ts::Rect(0, 0, 200, 200))->addTexture("Textures/container.jpg", true)->setPriority(2);//should not be overdrawn by second rect
+        rect = (new ts::Rect(0, 0, 200, 200))->addTexture("Textures/container.jpg", true);//should not be overdrawn by second rect
         rect2 = (new ts::Rect(0, 100, 200, 200))->addOutline(sf::Color::Red, 10)->setColor(sf::Color::Blue);
         circle = (new ts::Circle(1000, 200, 50))->setColor(sf::Color::Green)->addOutline(sf::Color::Yellow, 5);
         circle2 = (new ts::Circle(500, 200, 50))->addTexture("Textures/awesomeface.png", true);

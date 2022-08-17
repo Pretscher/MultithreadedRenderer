@@ -64,10 +64,11 @@ public:
 
 	static void init() {
 		initSettings();
-		renderingThread = new std::thread(&Renderer::threadInit);
+
 	}
 
 	static void startEventloop(void (*callbackEventloop)()) {
+		renderingThread = new std::thread(&Renderer::threadInit);
 		SleepAPI sleepAPI{};//for way more accurate sleeps than this_thread::sleep allows
 		sf::Event eventCatcher{};
 		//Event loop of main thread main thread
@@ -86,30 +87,17 @@ public:
 	}
 
 	static void addBackground(std::string texturePath, bool repeat) {
-		(new ts::Rect(0, 0, (float)xPixels, (float)yPixels))->addTexture(texturePath, repeat)->setPriority(0);//0 is lowest priority => drawn in the back.
+		ts::Rect* background = (new ts::Rect(0, 0, (float)xPixels, (float)yPixels))->addTexture(texturePath, repeat);//0 is lowest priority => drawn in the back.
+		removePermanentObject(background);//it was added at the end of the line, but we want it to be drawn first.
+		permanentObjects.insert(permanentObjects.begin(), background);//reinsert at front
 	}
 
 	//Drawing--------------------------------------------------------------------------------------------------------------------------------------
 
 	static void addPermanentObject(ts::Drawable* object) {
 		isDrawing.lock();//dont add objects while drawing. 
-		//insert at LAST place in array (drawing order) with right priority (=> drawn in front of its own priority group)
-		for (size_t i = 0; i < permanentObjects.size(); i++) {
-			if (permanentObjects[i]->getPriority() > object->getPriority()) {
-				permanentObjects.insert(permanentObjects.begin() + i, object);
-				isDrawing.unlock();
-				return;
-			}
-		}
-		//nothing with bigger priority in array => append
 		permanentObjects.push_back(object);
 		isDrawing.unlock();
-	}
-
-
-	static void updatePriority(ts::Drawable* object) {
-		removePermanentObject(object);//erase in old place
-		addPermanentObject(object);//reinsert at new place
 	}
 	
 	/*Call this in the destructor of an Object and it will remove itself from the drawing array when deleted.*/

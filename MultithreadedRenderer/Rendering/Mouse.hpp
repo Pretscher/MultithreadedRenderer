@@ -5,7 +5,7 @@ class Mouse {
 public:
     Mouse() = delete;
 
-    static sf::Vector2i getMousePos(bool factorInBorders);
+    static sf::Vector2i getPosition(bool factorInBorders);
 
     static sf::Vector2i getLastFinishedLeftClick() {
         return lastFinishedClickPos;
@@ -29,12 +29,12 @@ public:
             finishedClickCounter = false;
             clickComplete = false;
             clickCounter++;
-            lastClickPos = getMousePos(true);
+            lastClickPos = getPosition(true);
         }
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left) == false && clickComplete == false) {
             clickComplete = true;
             finishedClickCounter++;
-            lastFinishedClickPos = getMousePos(true);//save mouse coords to last click positions
+            lastFinishedClickPos = getPosition(true);//save mouse coords to last click positions
         }
     }
 

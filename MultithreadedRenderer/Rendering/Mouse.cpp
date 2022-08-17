@@ -7,7 +7,7 @@ bool Mouse::clickComplete;
 int Mouse::clickCounter;
 int Mouse::finishedClickCounter;
 
-sf::Vector2i Mouse::getMousePos(bool factorInBorders) {
+sf::Vector2i Mouse::getPosition(bool factorInBorders) {
     auto pos = sf::Mouse::getPosition(*Renderer::window);
     int xPixels = Renderer::getPixelCountX();
     int yPixels = Renderer::getPixelCountY();

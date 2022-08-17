@@ -17,11 +17,6 @@ void ts::Drawable::draw() {
 	Renderer::window->draw(*drawable);
 }
 
-void ts::Drawable::setPriority(int priority) {
-	this->priority = priority;
-	Renderer::updatePriority(this);
-}
-
 void ts::Shape::addTexture(std::string texturePath, bool repeat) {
 	Renderer::queueTextureLoading(texturePath, repeat, shape);
 }

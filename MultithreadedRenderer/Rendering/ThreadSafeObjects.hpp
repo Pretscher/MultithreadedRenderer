@@ -6,7 +6,8 @@ namespace ts {
 	protected:
 		std::mutex mtx;
 		sf::Drawable* drawable = nullptr;
-
+		std::mutex drawMeMtx;
+		bool drawMe = true;
 		void initDrawableAfterConstruction(sf::Drawable* drawable);
 	public:
 		Drawable() {}
@@ -24,16 +25,27 @@ namespace ts {
 			mtx.unlock();
 		}
 
+		void hide() {
+			drawMeMtx.lock();
+			drawMe = false;
+			drawMeMtx.unlock();
+		}
+
+		void show() {
+			drawMeMtx.lock();
+			drawMe = true;
+			drawMeMtx.unlock();
+		}
+
+		bool isShown() {
+			drawMeMtx.lock();
+			bool temp = drawMe;
+			drawMeMtx.unlock();
+			return temp;
+		}
+
 		/** ONLY CALL IN RENDERER! If you call it from anywhere else, it is not thread-synced*/
 		virtual void draw();
-
-		void setPriority(int priority);
-		
-		int getPriority() {
-			return priority;
-		}
-	private:
-		int priority = 1;
 	};
 
 	class Shape : public Drawable {
@@ -76,6 +88,21 @@ namespace ts {
 		 * @return Shape* this
 		 */
 		void addTexture(std::string texturePath, bool repeat);
+		
+	public:
+		sf::Color getColor() {
+			mtx.lock();
+			sf::Color temp = shape->getFillColor();
+			mtx.unlock();
+			return temp;
+		}
+
+		sf::Vector2f getPosition() {
+			mtx.lock();
+			sf::Vector2f temp = shape->getPosition();
+			mtx.unlock();
+			return temp;
+		}
 	};
 
 	class Rect : public Shape {
@@ -103,6 +130,16 @@ namespace ts {
 			return this;
 		}
 		
+		Rect* setX(float x) {
+			Shape::transform(x, rect->getPosition().y);
+			return this;
+		}
+
+		Rect* setY(float y) {
+			Shape::transform(rect->getPosition().x, y);
+			return this;
+		}
+
 		Rect* addOutline(sf::Color color, float thickness) {
 			Shape::addOutline(color, thickness);
 			return this;
@@ -125,9 +162,11 @@ namespace ts {
 			return this;
 		}
 
-		Rect* setPriority(int priority) {
-			Drawable::setPriority(priority);
-			return this;
+		sf::Vector2f getSize() {
+			mtx.lock();
+			sf::Vector2f temp = rect->getSize();
+			mtx.unlock();
+			return temp;
 		}
 	};
 
@@ -139,7 +178,7 @@ namespace ts {
 		Line() = delete;
 
 		Line(float x1, float y1, float x2, float y2) 
-			: line(new sf::RectangleShape(sf::Vector2(0.0f, 5.0f))) {//init with a default thickness of 5 pixels
+			: line(new sf::RectangleShape(sf::Vector2f(0.0f, 5.0f))) {//init with a default thickness of 5 pixels
 			this->x2 = x2;
 			this->y2 = y2;
 			transform(x1, y1, x2, y2);
@@ -180,11 +219,6 @@ namespace ts {
 
 		Line* setColor(sf::Color color) {
 			Shape::setColor(color);
-			return this;
-		}
-
-		Line* setPriority(int priority) {
-			Drawable::setPriority(priority);
 			return this;
 		}
 	};
@@ -230,9 +264,11 @@ namespace ts {
 			return this;
 		}
 
-		Circle* setPriority(int priority) {
-			Drawable::setPriority(priority);
-			return this;
+		float getRadius() {
+			mtx.lock();
+			float temp = circle->getRadius();
+			mtx.unlock();
+			return temp;
 		}
 	};
 
@@ -247,6 +283,44 @@ namespace ts {
 			text->setString(displayedText);
 			this->setFont("Fonts/calibri.ttf");//default font is calibri
 			initDrawableAfterConstruction(text);
+		}
+
+		Text(std::string displayedText) : text(new sf::Text()) {
+			text = new sf::Text();
+			text->setPosition(0.0f, 0.0f);
+			text->setString(displayedText);
+			this->setFont("Fonts/calibri.ttf");//default font is calibri
+			initDrawableAfterConstruction(text);
+		}
+
+		Text* centerToRect(int x, int y, int width, int height) {
+			std::string temp = text->getString().toAnsiString();
+			bool bold = (text->getStyle() == sf::Text::Bold);
+			auto font = text->getFont();
+			int maxHeight = 0;
+			for (int x = 0; x < text->getString().getSize(); x++)
+			{
+				sf::Uint32 Character = temp.at(x);
+				const sf::Glyph& CurrentGlyph = font->getGlyph(Character, text->getCharacterSize(), bold);
+
+				int Height = CurrentGlyph.bounds.height;
+
+				if (maxHeight < Height) {
+					maxHeight = Height;
+				}
+			}
+
+			sf::FloatRect rect = text->getGlobalBounds();
+
+			rect.left = ((float)width / 2) - (rect.width / 2);
+			rect.top = ((float)height / 2) - ((float)maxHeight / 2) - (rect.height - maxHeight) + (((float)rect.height - (text->getCharacterSize() * 1.5))) / 2;
+
+			text->setPosition(rect.left + x, rect.top + y);
+			return this;
+		}
+
+		Text* centerToRect(ts::Rect* rect) {
+			return centerToRect(rect->getPosition().x, rect->getPosition().y, rect->getSize().x, rect->getSize().y);//returns this
 		}
 
 		Text* setFont(std::string fontPath) {
@@ -280,11 +354,14 @@ namespace ts {
 			mtx.unlock();
 			return this;
 		}
-		
-		Text* setPriority(int priority) {
-			Drawable::setPriority(priority);
+
+		Text* setCharacterSize(float characterSize) {
+			mtx.lock();
+			text->setCharacterSize(characterSize);
+			mtx.unlock();
 			return this;
 		}
+
 	private:
 		//loaded in main thread because loading a font is not incredibly costly and I can't be bothered to put it into the Rendering thread like texture loading
 		sf::Font* loadFont(std::string fontPath);

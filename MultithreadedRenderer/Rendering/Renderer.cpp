@@ -33,6 +33,7 @@ void Renderer::drawFrame() {
 	loadAllTextures();
 	window->clear();
 	isDrawing.lock();
+
 	//lock all drawables before drawing, so that they are at the transformation state of the same frame.
 	for (unsigned int i = 0; i < permanentObjects.size(); i++) {
 		permanentObjects[i]->lock();
@@ -40,7 +41,9 @@ void Renderer::drawFrame() {
 
 	//draw permanent objects
 	for (unsigned int i = 0; i < permanentObjects.size(); i++) {
-		permanentObjects[i]->draw();
+		if (permanentObjects[i]->isShown() == true) {
+			permanentObjects[i]->draw();
+		}
 		permanentObjects[i]->unlock();
 	}
 	isDrawing.unlock();
