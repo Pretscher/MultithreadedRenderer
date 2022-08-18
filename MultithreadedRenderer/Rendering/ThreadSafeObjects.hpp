@@ -9,12 +9,17 @@ namespace ts {
 		std::mutex drawMeMtx;
 		bool drawMe = true;
 		void initDrawableAfterConstruction(sf::Drawable* drawable);
+
+		//used so that we dont add the same drawable multiple times to the Renderer. reset in Drawable::applyChanges, so call this when overriding!
+		bool addedAsChanged = false;
+		void prepareApplyingChanges();
+
 	public:
 		Drawable() {}
 		Drawable(const Drawable& rect) = delete;
 		Drawable(Drawable&& rect) = delete;
-		~Drawable();
-		
+		virtual ~Drawable();
+
 		//Prevents all changes to the drawable (transformations, resizings, recolorings etc.) until the lock is released with unlock(). 
 		void lock() {
 			mtx.lock();
@@ -44,7 +49,18 @@ namespace ts {
 			return temp;
 		}
 
-		virtual void applyChanges() {}
+		bool isEqualTo(ts::Drawable& drawable) {
+			return this->drawable == drawable.accessDrawable();
+		}
+
+		//There is no reason to call this externally.
+		sf::Drawable* accessDrawable() {
+			return drawable;
+		}
+
+		virtual void applyChanges() {
+			addedAsChanged = false;
+		}
 		/** ONLY CALL IN RENDERER! If you call it from anywhere else, it is not thread-synced*/
 		virtual void draw();
 	};
@@ -53,6 +69,7 @@ namespace ts {
 	protected:
 		sf::Shape* shape = nullptr;
 		Shape() {};
+
 		void initShapeAfterConstruction(sf::Shape* shape) {
 			this->shape = shape;
 			initDrawableAfterConstruction(shape);
@@ -66,29 +83,37 @@ namespace ts {
 	protected:
 		float actualX = 0.0f, actualY = 0.0f, actualWidth = 0.0f, actualHeight = 0.0f;
 		bool positionChanged = false, sizeChanged = false, colorChanged = false;
+
 		sf::Color actualColor;
 		std::mutex actualDataMtx;
+
 	public:
 		void applyChanges() override {
 			actualDataMtx.lock();
 			if (positionChanged == true) {
 				shape->setPosition(actualX, actualY);
+				positionChanged = false;
 			}
 			if (sizeChanged == true) {
 				shape->setScale(sf::Vector2f(actualWidth, actualHeight));
+				sizeChanged = false;
 			}
 			if (colorChanged == true) {
 				shape->setFillColor(actualColor);
+				colorChanged = false;
 			}
+
+			Drawable::applyChanges();
 			actualDataMtx.unlock();
 		}
 
-		
+
 		void transform(float x, float y) {
 			actualDataMtx.lock();
 			actualX = x;
 			actualY = y;
 			positionChanged = true;
+			prepareApplyingChanges();
 			actualDataMtx.unlock();
 		}
 
@@ -97,6 +122,7 @@ namespace ts {
 			actualWidth = width;
 			actualHeight = height;
 			sizeChanged = true;
+			prepareApplyingChanges();
 			actualDataMtx.unlock();
 		}
 
@@ -104,6 +130,7 @@ namespace ts {
 			actualDataMtx.lock();
 			actualColor = color;
 			colorChanged = true;
+			prepareApplyingChanges();
 			actualDataMtx.unlock();
 		}
 
@@ -114,7 +141,7 @@ namespace ts {
 		void setY(float y) {
 			transform(actualX, y);
 		}
-		
+
 		int getX() {
 			actualDataMtx.lock();
 			int x = actualX;
@@ -144,7 +171,7 @@ namespace ts {
 			shape->setOutlineThickness(thickness);
 			mtx.unlock();
 		}
-		
+
 		sf::Color getColor() {
 			actualDataMtx.lock();
 			sf::Color temp = actualColor;
@@ -166,16 +193,16 @@ namespace ts {
 	public:
 		Rect() = delete;
 
-		Rect(sf::RectangleShape* rect) : rect(rect) {
-			this->rect = rect;
-			initShapeAfterConstruction(rect);
-		}
-		
 		Rect(float x, float y, float width, float height) : rect(new sf::RectangleShape(sf::Vector2f(width, height))) {
 			rect->setPosition(x, y);
+			actualX = x; actualY = y; actualWidth = width; actualHeight = height;
 			initShapeAfterConstruction(rect);
 		}
 
+		~Rect() override {
+			Drawable::~Drawable();
+			delete rect;
+		}
 
 		//Builder functions generated from implementations in shape (done this way to avoid duplicate code)---------------------------------------------------
 
@@ -183,7 +210,7 @@ namespace ts {
 			Shape::addOutline(color, thickness);
 			return this;
 		}
-		
+
 		Rect* setColor(sf::Color color) {
 			Shape::setColor(color);
 			return this;
@@ -210,12 +237,17 @@ namespace ts {
 	public:
 		Line() = delete;
 
-		Line(float x1, float y1, float x2, float y2) 
+		~Line() override {
+			Drawable::~Drawable();
+			delete line;
+		}
+
+		Line(float x1, float y1, float x2, float y2)
 			: line(new sf::RectangleShape(sf::Vector2f(0.0f, 5.0f))) {//init with a default thickness of 5 pixels
 			this->x2 = x2;
 			this->y2 = y2;
 			transform(x1, y1, x2, y2);
-			
+
 			initDrawableAfterConstruction(this->line);
 		}
 
@@ -263,13 +295,21 @@ namespace ts {
 		sf::CircleShape* circle;
 	public:
 		Circle() = delete;
+
+
 		Circle(sf::CircleShape* circle) : circle(circle) {
 			initShapeAfterConstruction(this->circle);
 		}
-		
+
 		Circle(float x, float y, float radius) : circle(new sf::CircleShape(radius)) {
 			circle->setPosition(x, y);
+			actualX = x; actualY = y; actualRadius = radius;
 			initShapeAfterConstruction(this->circle);
+		}
+
+		~Circle() override {
+			Drawable::~Drawable();
+			delete circle;
 		}
 
 		Circle* addOutline(sf::Color color, float thickness) {
@@ -294,6 +334,7 @@ namespace ts {
 			actualDataMtx.lock();
 			actualRadius = radius;
 			radiusChanged = true;
+			prepareApplyingChanges();
 			actualDataMtx.unlock();
 			return this;
 		}
@@ -334,6 +375,11 @@ namespace ts {
 			text->setString(displayedText);
 			this->setFont("Fonts/calibri.ttf");//default font is calibri
 			initDrawableAfterConstruction(text);
+		}
+
+		~Text() override {
+			Drawable::~Drawable();
+			delete text;
 		}
 
 		Text* centerToRect(int x, int y, int width, int height) {

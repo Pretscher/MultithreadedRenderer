@@ -9,7 +9,6 @@ int Renderer::yPixels;
 
 //Multithreading------------------------------------------------------------------------------------------------------------------------------
 std::thread* Renderer::renderingThread;
-std::mutex Renderer::isDrawing;
 void Renderer::joinDrawingThread() {
 	renderingThread->join();
 	delete renderingThread;
@@ -29,10 +28,13 @@ void Renderer::loop() {
 //Drawing--------------------------------------------------------------------------------------------------------------------------------------
 
 std::vector<ts::Drawable*> Renderer::permanentObjects;
+std::mutex Renderer::permanentObjectMtx;
+std::vector<ts::Drawable*> Renderer::changedObjects;
+std::mutex Renderer::changedObjectMtx;
 void Renderer::drawFrame() {
 	loadAllTextures();
 	window->clear();
-	isDrawing.lock();
+	permanentObjectMtx.lock();
 
 	//lock all drawables before drawing, so that they are at the transformation state of the same frame.
 	for (unsigned int i = 0; i < permanentObjects.size(); i++) {
@@ -46,12 +48,15 @@ void Renderer::drawFrame() {
 		}
 		permanentObjects[i]->unlock();
 	}
-	isDrawing.unlock();
+	permanentObjectMtx.unlock();
 	window->display();
-	
-	for (int i = 0; i < permanentObjects.size(); i++) {
-		permanentObjects[i]->applyChanges();
+
+	changedObjectMtx.lock();
+	for (unsigned int i = 0; i < changedObjects.size(); i++) {
+		changedObjects[i]->applyChanges();
 	}
+	changedObjects.clear();
+	changedObjectMtx.unlock();
 }
 
 //Textures-------------------------------------------------------------------------------------------------------------

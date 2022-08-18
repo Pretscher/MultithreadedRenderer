@@ -16,7 +16,7 @@ public:
 	std::string path;
 	bool repeat;
 	sf::Shape* toApply;
-	
+
 	void setTexture(sf::Texture* texture) {
 		toApply->setTexture(texture);
 	}
@@ -38,9 +38,11 @@ class Renderer {
 private:
 	//Threadsafe objects that are cummulatively locked, drawn and individually unlocked each frame
 	static std::vector<ts::Drawable*> permanentObjects;
-
+	static std::mutex permanentObjectMtx;
+	static std::vector<ts::Drawable*> changedObjects;
+	static std::mutex changedObjectMtx;
 	static std::thread* renderingThread;
-	static std::mutex isDrawing;
+
 	static void threadInit();
 	static void loop();
 
@@ -68,7 +70,7 @@ public:
 
 	static void startEventloop(void (*callbackEventloop)()) {
 		renderingThread = new std::thread(&Renderer::threadInit);
-		
+
 		SleepAPI sleepAPI{};//for way more accurate sleeps than this_thread::sleep allows
 		sf::Event eventCatcher{};
 		//Event loop of main thread main thread
@@ -95,23 +97,37 @@ public:
 	//Drawing--------------------------------------------------------------------------------------------------------------------------------------
 
 	static void addPermanentObject(ts::Drawable* object) {
-		isDrawing.lock();//dont add objects while drawing. 
+		permanentObjectMtx.lock();//dont add objects while drawing. 
 		permanentObjects.push_back(object);
-		isDrawing.unlock();
+		permanentObjectMtx.unlock();
 	}
-	
+
+	static void addAsChangedObject(ts::Drawable* object) {
+		changedObjectMtx.lock();
+		changedObjects.push_back(object);
+		changedObjectMtx.unlock();
+	}
+
 	/*Call this in the destructor of an Object and it will remove itself from the drawing array when deleted.*/
 
 	static void removePermanentObject(ts::Drawable* object) {
-		isDrawing.lock();
+		permanentObjectMtx.lock();
 		for (size_t i = 0; i < permanentObjects.size(); i++) {
 			if (permanentObjects[i] == object) {
 				permanentObjects.erase(permanentObjects.begin() + i);
-				isDrawing.unlock();
-				return;
+				break;
 			}
 		}
-		isDrawing.unlock();
+		permanentObjectMtx.unlock();
+		//can also be in changed objects, remove it from there as well.
+		changedObjectMtx.lock();
+		for (size_t i = 0; i < changedObjects.size(); i++) {
+			if (changedObjects[i] == object) {
+				changedObjects.erase(changedObjects.begin() + i);
+				break;
+			}
+		}
+		changedObjectMtx.unlock();
 	}
 
 	static void drawFrame();
