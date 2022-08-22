@@ -41,6 +41,7 @@ private:
 	static std::mutex permanentObjectMtx;
 	static std::vector<ts::Drawable*> changedObjects;
 	static std::mutex changedObjectMtx;
+	static std::mutex drawingMtx;
 	static std::thread* renderingThread;
 
 	static void threadInit();
@@ -52,6 +53,14 @@ public:
 	static sf::RenderWindow* window;
 	/** Creates a window and starts a seperate drawing thread.
 	*/
+
+	static void stopDrawing() {
+		drawingMtx.lock();
+	}
+
+	static void continueDrawing() {
+		drawingMtx.unlock();
+	}
 
 	static void initSettings() {
 		sf::ContextSettings settings;
@@ -112,16 +121,26 @@ public:
 
 	static void removePermanentObject(ts::Drawable* object) {
 		permanentObjectMtx.lock();
-		for (size_t i = 0; i < permanentObjects.size(); i++) {
+
+		for (int i = permanentObjects.size() - 1; i >= 0; i--) {//search from the back because those objects are more probable to be temporary
 			if (permanentObjects[i] == object) {
+				auto a = permanentObjects[permanentObjects.size() - 1];
+				auto b = permanentObjects[permanentObjects.size() - 2];
+				auto c = permanentObjects[permanentObjects.size() - 3];
+				auto d = permanentObjects[permanentObjects.size() - 4];
 				permanentObjects.erase(permanentObjects.begin() + i);
+
+				auto e = permanentObjects[permanentObjects.size() - 1];
+				auto f = permanentObjects[permanentObjects.size() - 2];
+				auto g = permanentObjects[permanentObjects.size() - 3];
+				auto h = permanentObjects[permanentObjects.size() - 4];
 				break;
 			}
 		}
 		permanentObjectMtx.unlock();
 		//can also be in changed objects, remove it from there as well.
 		changedObjectMtx.lock();
-		for (size_t i = 0; i < changedObjects.size(); i++) {
+		for (int i = changedObjects.size() - 1; i >= 0; i--) {
 			if (changedObjects[i] == object) {
 				changedObjects.erase(changedObjects.begin() + i);
 				break;

@@ -58,6 +58,8 @@ namespace ts {
 			return drawable;
 		}
 
+		/*Call this from the renderer to apply commonand costly changes in the Rendering thread(prevents blocking of drawing)
+		Override this in derived classes and add the actual functionality there. */
 		virtual void applyChanges() {
 			addedAsChanged = false;
 		}
@@ -82,7 +84,7 @@ namespace ts {
 		 */
 	protected:
 		float actualX = 0.0f, actualY = 0.0f, actualWidth = 0.0f, actualHeight = 0.0f;
-		bool positionChanged = false, sizeChanged = false, colorChanged = false;
+		bool positionChanged = false, colorChanged = false;
 
 		sf::Color actualColor;
 		std::mutex actualDataMtx;
@@ -90,20 +92,17 @@ namespace ts {
 	public:
 		void applyChanges() override {
 			actualDataMtx.lock();
+
 			if (positionChanged == true) {
 				shape->setPosition(actualX, actualY);
 				positionChanged = false;
-			}
-			if (sizeChanged == true) {
-				shape->setScale(sf::Vector2f(actualWidth, actualHeight));
-				sizeChanged = false;
 			}
 			if (colorChanged == true) {
 				shape->setFillColor(actualColor);
 				colorChanged = false;
 			}
-
 			Drawable::applyChanges();
+
 			actualDataMtx.unlock();
 		}
 
@@ -113,15 +112,6 @@ namespace ts {
 			actualX = x;
 			actualY = y;
 			positionChanged = true;
-			prepareApplyingChanges();
-			actualDataMtx.unlock();
-		}
-
-		void resize(float width, float height) {
-			actualDataMtx.lock();
-			actualWidth = width;
-			actualHeight = height;
-			sizeChanged = true;
 			prepareApplyingChanges();
 			actualDataMtx.unlock();
 		}
@@ -142,16 +132,16 @@ namespace ts {
 			transform(actualX, y);
 		}
 
-		int getX() {
+		float getX() {
 			actualDataMtx.lock();
-			int x = actualX;
+			float x = actualX;
 			actualDataMtx.unlock();
 			return x;
 		}
 
-		int getY() {
+		float getY() {
 			actualDataMtx.lock();
-			int y = actualY;
+			float y = actualY;
 			actualDataMtx.unlock();
 			return y;
 		}
@@ -216,7 +206,6 @@ namespace ts {
 			return this;
 		}
 
-
 		Rect* addTexture(std::string texturePath, bool repeat) {
 			Shape::addTexture(texturePath, repeat);
 			return this;
@@ -228,6 +217,28 @@ namespace ts {
 			mtx.unlock();
 			return temp;
 		}
+
+		void applyChanges() {
+			Shape::applyChanges();
+			actualDataMtx.lock();
+			if (sizeChanged == true) {
+				rect->setSize(sf::Vector2f(actualWidth, actualHeight));
+				sizeChanged = false;
+			}
+			actualDataMtx.unlock();
+		}
+
+		void resize(float width, float height) {
+			actualDataMtx.lock();
+			actualWidth = width;
+			actualHeight = height;
+			sizeChanged = true;
+			prepareApplyingChanges();
+			actualDataMtx.unlock();
+		}
+
+	protected:
+		bool sizeChanged = false;
 	};
 
 	class Line : public Drawable {
@@ -327,7 +338,7 @@ namespace ts {
 			return this;
 		}
 	protected:
-		int actualRadius = 0;
+		float actualRadius = 0;
 		bool radiusChanged = false;
 	public:
 		Circle* setRadius(float radius) {
@@ -382,17 +393,17 @@ namespace ts {
 			delete text;
 		}
 
-		Text* centerToRect(int x, int y, int width, int height) {
+		Text* centerToRect(float x, float y, float width, float height) {
 			std::string temp = text->getString().toAnsiString();
 			bool bold = (text->getStyle() == sf::Text::Bold);
 			auto font = text->getFont();
-			int maxHeight = 0;
+			float maxHeight = 0;
 			for (int x = 0; x < text->getString().getSize(); x++)
 			{
 				sf::Uint32 Character = temp.at(x);
 				const sf::Glyph& CurrentGlyph = font->getGlyph(Character, text->getCharacterSize(), bold);
 
-				int Height = CurrentGlyph.bounds.height;
+				float Height = CurrentGlyph.bounds.height;
 
 				if (maxHeight < Height) {
 					maxHeight = Height;
@@ -401,8 +412,8 @@ namespace ts {
 
 			sf::FloatRect rect = text->getGlobalBounds();
 
-			rect.left = ((float)width / 2) - (rect.width / 2);
-			rect.top = ((float)height / 2) - ((float)maxHeight / 2) - (rect.height - maxHeight) + (((float)rect.height - (text->getCharacterSize() * 1.5))) / 2;
+			rect.left = (width / 2) - (rect.width / 2);
+			rect.top = (height / 2) - (maxHeight / 2) - (rect.height - maxHeight) + ((rect.height - ((float)text->getCharacterSize() * 1.5f))) / 2;
 
 			transform(rect.left + x, rect.top + y);
 			return this;
@@ -440,7 +451,7 @@ namespace ts {
 			return this;
 		}
 
-		Text* setCharacterSize(float characterSize) {
+		Text* setCharacterSize(unsigned int characterSize) {
 			mtx.lock();
 			text->setCharacterSize(characterSize);
 			mtx.unlock();

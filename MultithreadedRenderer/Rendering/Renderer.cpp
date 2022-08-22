@@ -31,17 +31,28 @@ std::vector<ts::Drawable*> Renderer::permanentObjects;
 std::mutex Renderer::permanentObjectMtx;
 std::vector<ts::Drawable*> Renderer::changedObjects;
 std::mutex Renderer::changedObjectMtx;
+std::mutex Renderer::drawingMtx;
+
 void Renderer::drawFrame() {
 	loadAllTextures();
 	window->clear();
-	permanentObjectMtx.lock();
+	drawingMtx.lock();
 
+	//apply all changes-------------------------------------------------------------------------------------------------------
+	changedObjectMtx.lock();
+	for (unsigned int i = 0; i < changedObjects.size(); i++) {
+		changedObjects[i]->applyChanges();
+	}
+	changedObjects.clear();
+	changedObjectMtx.unlock();
+
+	//draw permanent objects---------------------------------------------------------------------------------------------------
+	permanentObjectMtx.lock();
 	//lock all drawables before drawing, so that they are at the transformation state of the same frame.
 	for (unsigned int i = 0; i < permanentObjects.size(); i++) {
 		permanentObjects[i]->lock();
 	}
 
-	//draw permanent objects
 	for (unsigned int i = 0; i < permanentObjects.size(); i++) {
 		if (permanentObjects[i]->isShown() == true) {
 			permanentObjects[i]->draw();
@@ -49,14 +60,9 @@ void Renderer::drawFrame() {
 		permanentObjects[i]->unlock();
 	}
 	permanentObjectMtx.unlock();
-	window->display();
 
-	changedObjectMtx.lock();
-	for (unsigned int i = 0; i < changedObjects.size(); i++) {
-		changedObjects[i]->applyChanges();
-	}
-	changedObjects.clear();
-	changedObjectMtx.unlock();
+	drawingMtx.unlock();
+	window->display();
 }
 
 //Textures-------------------------------------------------------------------------------------------------------------
